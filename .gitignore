@@ -1,0 +1,15 @@
+# Data, generated artefacts and environment: never committed.
+data/
+results/
+features/
+figures/
+tables/
+.venv/
+__pycache__/
+*.npz
+
+# Python / tooling noise
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+.ipynb_checkpoints/

@@ -1,0 +1,144 @@
+% Bibliography for "How Many Sensors Are Enough?"
+%
+% RULE FOR THIS FILE: nothing goes in uncommented unless it has been verified
+% against the source. Entries below are marked with what was checked and what
+% was not. Do not uncomment an example entry and fill it from memory.
+
+% ===========================================================================
+% THE DATASET  (cite this; it is the only entry that is not a placeholder)
+% ===========================================================================
+%
+% VERIFIED on 2026-09-24 against
+% https://www02.smt.ufrj.br/~offshore/mfs/page_01.html
+%   - "Felipe M. L. Ribeiro" is the contact named on the page.
+%   - Host: "Signals, Multimedia, and Telecommunications Laboratory",
+%     "COPPE/Poli/UFRJ".
+%   - The page states 1,951 multivariate time-series across six fault
+%     categories, which matches EXPECTED_RECORDINGS in the code.
+%   - The page spells the dataset "MAFAULDA".
+%
+% CONSTRUCTED, NOT QUOTED: the page requests no particular citation format, so
+% this entry is written in the IEEE online-resource form rather than copied
+% from the source.
+%
+% NO YEAR, DELIBERATELY: the page states no year, and published citations of
+% this dataset disagree with each other (2016 and 2018 both appear in the
+% literature). Choosing one would be fabricating precision, so the field is
+% omitted. The IEEE online-resource form does not require it; the accessed
+% date carries the temporal information instead.
+%
+% TODO: set the accessed date to the day the data was actually downloaded.
+% No DOI is stated on the page.
+%
+@misc{mafaulda,
+  author       = {Ribeiro, Felipe M. L.},
+  title        = {{MAFAULDA}: Machinery Fault Database},
+  howpublished = {Signals, Multimedia and Telecommunications Laboratory,
+                  {COPPE/Poli}, Universidade Federal do Rio de Janeiro.
+                  [Online]. Available:
+                  \url{https://www02.smt.ufrj.br/~offshore/mfs/page_01.html}},
+  note         = {[Accessed: TODO --- set to the real download date]}
+}
+
+% ===========================================================================
+% RELATED WORK: FILING SLOTS
+% ===========================================================================
+%
+% Source note: these themes are NOT enumerated in PROJECT_SPEC.md, which lists
+% only the section names. They are filing bins for reading, and they do NOT
+% map one-to-one onto the paper's subsections: five subsections in the space
+% available would be one paragraph each.
+%
+% BIN -> SUBSECTION MAPPING (keep in step with main.tex Section II):
+%
+%   Bins 1 + 2  ->  II-A  Fault diagnosis on rotating machinery
+%   Bin  3      ->  II-B  Sensor and feature selection and reduction
+%   Bins 4 + 5  ->  II-C  Evaluation methodology in machinery datasets
+%                          then a closing paragraph stating the gap
+%
+% II-C is not filler: it is where this paper's leakage handling and the
+% permutation-importance limitation are positioned against prior work.
+%
+% File papers under the matching bin as you read them. Add the real BibTeX
+% from the publisher or the DOI; do not type entries from memory, and do not
+% add a paper you have not read enough of to cite honestly.
+%
+% ---------------------------------------------------------------------------
+% BIN 1 -> II-A: Vibration-based fault diagnosis on rotating machinery
+%   General background. What is normally measured, which features are
+%   conventional, and what performance is typically reported.
+%   Also cited from: the Introduction motivation.
+% ---------------------------------------------------------------------------
+% (file entries here)
+
+% ---------------------------------------------------------------------------
+% BIN 2 -> II-A: The MaFaulDa dataset and published results on it
+%   Prior work using this specific dataset. Needed to position our numbers,
+%   and specifically to state what accuracy has been reported before AND under
+%   which validation scheme. Record for each paper whether it states how
+%   windows or segments were split, since window-level splitting inflates
+%   scores and makes a reported number incomparable with ours.
+%   Also cited from: Section III Dataset, and the Discussion comparison.
+% ---------------------------------------------------------------------------
+% (file entries here)
+
+% ---------------------------------------------------------------------------
+% BIN 3 -> II-B: Sensor and feature selection and reduction
+%   Wrapper, filter and embedded selection. Greedy forward selection in
+%   particular, and any prior work that evaluates subsets exhaustively rather
+%   than heuristically.
+%   Also cited from: the Methodology justification for forward selection.
+% ---------------------------------------------------------------------------
+% (file entries here)
+
+% ---------------------------------------------------------------------------
+% BIN 4 -> II-C: Permutation importance and its limitations
+%   The original formulation, and work on its behaviour under CORRELATED or
+%   REDUNDANT features. This bin carries the limitation documented in
+%   PROTOCOL.md section 8.2: permutation importance measures MARGINAL
+%   contribution, so a near-zero score cannot by itself distinguish a sensor
+%   that carries no information from one that is merely redundant.
+%   Also cited from: the Discussion of Fig. 2.
+% ---------------------------------------------------------------------------
+% (file entries here)
+
+% ---------------------------------------------------------------------------
+% BIN 5 -> II-C: Data leakage in machinery datasets
+%   Window-level and segment-level leakage, grouped cross-validation, and
+%   reported cases of inflated results from splitting correlated segments at
+%   random. Supports the leakage check in 02_checkpoint.py.
+%   Also cited from: the Methodology leakage-control subsection.
+% ---------------------------------------------------------------------------
+% (file entries here)
+
+% ===========================================================================
+% FORMAT EXAMPLES  (commented; these are templates, not real references)
+% ===========================================================================
+
+% @article{example_journal,
+%   author  = {Lastname, Firstname and Other, Author},
+%   title   = {Title of the paper},
+%   journal = {IEEE Transactions on Industrial Electronics},
+%   volume  = {00},
+%   number  = {0},
+%   pages   = {1--10},
+%   year    = {2024},
+%   doi     = {10.1109/TIE.0000.0000000}
+% }
+
+% @inproceedings{example_conference,
+%   author    = {Lastname, Firstname},
+%   title     = {Title of the paper},
+%   booktitle = {Proc. IEEE Int. Conf. on Something},
+%   pages     = {1--6},
+%   year      = {2024},
+%   doi       = {10.1109/CONF.0000.0000000}
+% }
+
+% @book{example_book,
+%   author    = {Lastname, Firstname},
+%   title     = {Title of the Book},
+%   publisher = {Publisher},
+%   edition   = {2nd},
+%   year      = {2020}
+% }
