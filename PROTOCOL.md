@@ -6,13 +6,19 @@ source for the paper's methodology section.
 **Every decision recorded here was fixed before any MaFaulDa data was
 processed.** The protocol was frozen at the Git tag `v1.0.1-protocol`, which was
 created before the first real-data run and is the exact code that produces
-the real results. It supersedes `v1.0-protocol`, which is kept as the audit
-trail; the difference between the two tags is presentation and tooling only
-(the fig. 6b colour scale, the `--dry-run` probe, and the run script) and
-contains no experimental decision. Nothing below was chosen, tuned or
-revised in response to a result on the real dataset. Where a decision was
-revised during development, it was revised on synthetic data only, and the
-reason is stated.
+the real results. Nothing below was chosen, tuned or revised in response to a
+result on the real dataset. Where a decision was revised during development, it
+was revised on synthetic data only, and the reason is stated.
+
+**Repository history.** On 2026-09-24, before any MaFaulDa data was processed,
+the development history was squashed to a single commit and commit authorship
+was corrected. `v1.0-protocol` was removed and `v1.0.1-protocol` was recreated
+on the new commit. **No experimental decision changed in that operation**, and
+no code, constant or threshold differs as a result: the squashed tree is
+byte-identical to the pre-squash tree. The earlier two-tag scheme
+(`v1.0-protocol` superseded by `v1.0.1-protocol`, differing only in the fig. 6b
+colour scale, the `--dry-run` probe and the run script) no longer exists in the
+history; that distinction is recorded here instead.
 
 ---
 
