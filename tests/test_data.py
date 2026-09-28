@@ -29,6 +29,13 @@ EXPECTED_ROWS = 250_000
 SAMPLE_SIZE = 50
 SPEED_RANGE_HZ = (10.0, 65.0)
 
+# The tachometer estimate reads about 2.3% low because a recording ending
+# mid-revolution yields one fewer rising edge than it has revolutions, so the
+# agreement tolerance has to clear that. Measured on the real data before the
+# threshold was set; see PROTOCOL.md section 3.2.
+TACH_AGREEMENT_TOL = 0.10
+TACH_AGREEMENT_FRACTION = 0.95
+
 LOG = logging.getLogger(__name__)
 
 
@@ -127,24 +134,69 @@ def test_every_recording_has_five_windows() -> None:
 
 
 def test_feature_table_shape() -> None:
-    """8 sensors x 18 features plus 5 metadata columns."""
+    """8 sensors x 18 features plus 6 metadata columns."""
     df = _require_features()
     feature_columns = [c for c in df.columns if "__" in c]
     assert len(feature_columns) == len(SENSORS) * 18
-    assert df.shape[1] == len(SENSORS) * 18 + 5
+    assert df.shape[1] == len(SENSORS) * 18 + 6
+    assert {"speed_hz", "speed_hz_tach"} <= set(df.columns)
 
 
-def test_estimated_speeds_are_plausible() -> None:
-    """Estimated rotation speeds lie inside the documented range."""
+def test_speeds_are_plausible() -> None:
+    """Every rotation speed lies inside the documented range.
+
+    ``speed_hz`` comes from the file name, which the dataset encodes, so this
+    must hold for ALL 1,951 recordings with no exceptions. See PROTOCOL.md
+    section 3.1.
+    """
     df = _require_features()
     speeds = df.groupby("recording_id")["speed_hz"].first()
     low, high = SPEED_RANGE_HZ
     outside = speeds[(speeds < low) | (speeds > high)]
-    print(f"\nEstimated speed range: {speeds.min():.2f}-{speeds.max():.2f} Hz "
-          f"over {len(speeds)} recordings")
+    print(f"\nspeed_hz range (file name): {speeds.min():.3f}-{speeds.max():.3f} "
+          f"Hz over {len(speeds)} recordings")
+    assert len(speeds) == EXPECTED_RECORDINGS
     assert outside.empty, (
         f"{len(outside)} recording(s) outside {low}-{high} Hz, for example "
-        f"{outside.head().to_dict()}. Check the tachometer channel index.")
+        f"{outside.head().to_dict()}.")
+
+
+def test_tach_estimate_agrees_with_the_file_name_where_it_is_in_range() -> None:
+    """Where the tachometer estimate is usable, it tracks the file name.
+
+    This guards BOTH paths against a future regression: if the file-name parse
+    broke, or the tachometer estimator changed, the two would stop agreeing.
+
+    The tolerance is deliberately loose on the ratio because the estimator is
+    known to read about 2.3 percent low: a recording that ends mid-revolution
+    yields one fewer rising edge than it has revolutions. The 67 recordings
+    whose estimate is out of range are excluded by construction and are
+    documented in PROTOCOL.md section 3.2.
+    """
+    df = _require_features()
+    per_rec = df.groupby("recording_id").agg(
+        name=("speed_hz", "first"), tach=("speed_hz_tach", "first"))
+
+    low, high = SPEED_RANGE_HZ
+    usable = per_rec[(per_rec.tach >= low) & (per_rec.tach <= high)]
+    print(f"\ntachometer estimate in range for {len(usable)} of "
+          f"{len(per_rec)} recordings")
+
+    ratio = usable.tach / usable.name
+    print(f"  tach/name ratio: median {ratio.median():.4f}, "
+          f"min {ratio.min():.4f}, max {ratio.max():.4f}")
+
+    assert len(usable) >= 0.95 * len(per_rec), (
+        f"only {len(usable)} of {len(per_rec)} tachometer estimates are in "
+        f"{low}-{high} Hz; PROTOCOL.md section 3.2 documents 67 that are not")
+    assert ratio.median() == pytest.approx(1.0, abs=TACH_AGREEMENT_TOL), (
+        f"median tach/name ratio is {ratio.median():.4f}; the two speed "
+        "sources have diverged")
+    within = (ratio - 1.0).abs() <= TACH_AGREEMENT_TOL
+    assert within.mean() >= TACH_AGREEMENT_FRACTION, (
+        f"only {100 * within.mean():.1f}% of in-range estimates are within "
+        f"{TACH_AGREEMENT_TOL:.0%} of the file name, expected at least "
+        f"{TACH_AGREEMENT_FRACTION:.0%}")
 
 
 def test_speeds_vary_within_every_class() -> None:

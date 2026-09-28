@@ -247,6 +247,23 @@ machine learning, MaFaulDa
 %    over the same recordings, so they are not mutually independent. The
 %    p-values are supporting evidence alongside effect sizes and percentile
 %    ranks, not standalone proof.
+%
+% 6. Tachometer channel quality on a subset of recordings. On 67 of the 1,951
+%    recordings, all of them ball_fault, a rising-edge estimate of rotation
+%    speed from the tachometer channel overcounts, reporting up to 320.6 Hz
+%    against a true 50.79 Hz on a rig specified at 700-3600 rpm (about
+%    12-60 Hz). Those traces swing about 22 percent wider (median standard
+%    deviation 2.118 against 1.742), with a more negative minimum and a lower
+%    maximum, which lowers the midpoint threshold from about 1.97 to 0.80-1.27
+%    and into the noise band. An FFT of the same channel recovers the correct
+%    frequency to within about 1.3 Hz, so the signal carries the information
+%    and only the threshold crossing fails. This study therefore takes the
+%    rotation frequency from the file name, which the dataset encodes, and
+%    reports the tachometer estimate alongside it without using it. The
+%    limitation is a property of the dataset's tachometer channel on those
+%    files rather than of the method, and it matters for any work that derives
+%    speed from that channel. See PROTOCOL.md section 3.2 and
+%    scripts/diagnose_speed.py.
 
 \section{Conclusion}
 % TODO: answer RQ1-RQ3 in one paragraph, using only numbers from ../tables/.

@@ -10,7 +10,8 @@ exactly, so including it would add a duplicate feature.  ``tests/test_features.p
 enforces that no such algebraic duplicate exists.
 
 Output: ``features/features.csv``, one row per window, with columns
-    recording_id, window, label, condition_path, speed_hz, <sensor>__<feature>...
+    recording_id, window, label, condition_path, speed_hz, speed_hz_tach,
+    <sensor>__<feature>...
 
 Usage:
     python 01_extract_features.py              # every recording
@@ -21,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import re
 from pathlib import Path
 
 import numpy as np
@@ -50,7 +52,13 @@ FEATURE_NAMES: list[str] = [
 
 METADATA_COLUMNS: list[str] = [
     "recording_id", "window", "label", "condition_path", "speed_hz",
+    "speed_hz_tach",
 ]
+
+# MaFaulDa encodes the rotation frequency in Hz in the file name, e.g.
+# "12.288.csv". That is ground truth from the dataset authors; see PROTOCOL.md
+# section 3.1 for why it replaced the tachometer estimate as speed_hz.
+FILENAME_SPEED_RE = re.compile(r"^([0-9]+(?:\.[0-9]+)?)$")
 
 
 def window_features(x: NDArray[np.float64], fs: int = FS) -> dict[str, float]:
@@ -106,8 +114,40 @@ def window_features(x: NDArray[np.float64], fs: int = FS) -> dict[str, float]:
     return feats
 
 
+def speed_from_filename(path: Path) -> float:
+    """Read the rotation frequency in Hz from the recording's file name.
+
+    MaFaulDa names each recording after its rotation frequency, for example
+    ``12.288.csv``.  This is the dataset authors' own figure, so it is used
+    directly rather than estimated.
+
+    Args:
+        path: The CSV file.
+
+    Returns:
+        Rotation frequency in Hz.
+
+    Raises:
+        ValueError: If the file name is not a bare number.  A name that does
+            not parse means the assumption behind this column has broken, so
+            it fails loudly rather than falling back silently.
+    """
+    match = FILENAME_SPEED_RE.match(path.stem)
+    if match is None:
+        raise ValueError(
+            f"{path}: file name {path.stem!r} is not a bare rotation frequency "
+            "in Hz. speed_hz is parsed from the file name; see PROTOCOL.md "
+            "section 3.1."
+        )
+    return float(match.group(1))
+
+
 def estimate_speed_hz(tach: NDArray[np.float64], fs: int = FS) -> float:
     """Estimate the rotation frequency from the tachometer channel.
+
+    Retained as ``speed_hz_tach`` for comparison against the file-name value;
+    it is NOT the ``speed_hz`` used by the pipeline.  On 67 MaFaulDa
+    recordings it overcounts badly; see PROTOCOL.md section 3.1.
 
     The signal is thresholded halfway between its extremes and below-to-above
     crossings are counted; one crossing is one revolution.
@@ -169,7 +209,8 @@ def process_file(path: Path, rec_id: int, data_dir: Path) -> list[dict[str, obje
             f"Expected one of {CLASS_ORDER}."
         )
 
-    speed_hz = estimate_speed_hz(sig[:, SENSORS.index("tach")])
+    speed_hz = speed_from_filename(path)
+    speed_hz_tach = estimate_speed_hz(sig[:, SENSORS.index("tach")])
     win_len = sig.shape[0] // N_WINDOWS
 
     rows: list[dict[str, object]] = []
@@ -181,6 +222,7 @@ def process_file(path: Path, rec_id: int, data_dir: Path) -> list[dict[str, obje
             "label": label,
             "condition_path": rel.parent.as_posix(),
             "speed_hz": speed_hz,
+            "speed_hz_tach": speed_hz_tach,
         }
         for j, sensor in enumerate(SENSORS):
             for name, value in window_features(segment[:, j]).items():
@@ -246,8 +288,10 @@ def report(df: pd.DataFrame, limited: bool) -> None:
             "Total is %d, but the full MaFaulDa dataset has %d recordings. "
             "Check that the dataset is complete.", total, EXPECTED_RECORDINGS
         )
-    LOG.info("Estimated speed range: %.1f-%.1f Hz",
+    LOG.info("Speed range (from file names): %.2f-%.2f Hz",
              df["speed_hz"].min(), df["speed_hz"].max())
+    LOG.info("Speed range (tachometer estimate): %.2f-%.2f Hz",
+             df["speed_hz_tach"].min(), df["speed_hz_tach"].max())
     LOG.info("Feature table: %d rows x %d columns", df.shape[0], df.shape[1])
 
 

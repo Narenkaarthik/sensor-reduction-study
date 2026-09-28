@@ -99,8 +99,79 @@ Two notes on provenance:
 | Spectrum | `\|rfft(x · Hann)\|²` | Hann reduces spectral leakage |
 | `dominant_freq` | Excludes the DC bin | After mean removal the DC bin carries only leakage |
 | Frequency bands | 7 fixed bands, 5 Hz to 25 kHz | Fixed before any result; relative band energy is scale-free |
-| Speed estimate | Rising edges of the tachometer above `(max + min) / 2`, divided by duration | Simple, robust, and needs no assumptions about pulse shape |
+| `speed_hz` | Parsed from the recording's file name | Ground truth from the dataset authors; see section 3.1 |
+| `speed_hz_tach` | Rising edges of the tachometer above `(max + min) / 2`, divided by duration | Retained for comparison only; see section 3.1 |
 | `recording_id` | Assigned from the sorted file list | Makes the cross-validation groups identical on every run and machine |
+
+
+### 3.1 Where `speed_hz` comes from
+
+**Changed on 2026-09-28, AFTER data processing began.** This is the only
+protocol change made after the first real-data run, and it is recorded here in
+full.
+
+`speed_hz` is **parsed from the recording's file name**, which MaFaulDa uses to
+record the rotation frequency in Hz (for example `12.288.csv`). The tachometer
+estimate is still computed and kept as a second column, `speed_hz_tach`, but is
+no longer used by the pipeline.
+
+**Why the change was made.** Extracting the full dataset produced tachometer
+estimates spanning 11.6–320.6 Hz. The rig is specified at 700–3600 rpm, about
+12–60 Hz, so 320 Hz is **physically impossible**: the estimate was wrong, not
+the specification. 67 of 1,951 recordings read outside 10–65 Hz.
+
+**The decision rests on physical grounds, not on any score.** No model was
+fitted, no accuracy was consulted, and no hypothesis test was run at any point
+in reaching it. The reasoning is that a shaft cannot turn at 320 Hz on a rig
+built for 60 Hz.
+
+**Nothing in the recording-split results is affected.** `speed_hz` is metadata:
+it is not among the 144 model features and no model has ever seen it. The
+recording-split mode groups by `recording_id` and never reads it. The only
+consumer is `choose_speed_q`, which builds the speed-band grouping for the
+speed-split fallback — and that mode could not have been used correctly with
+the old values, which is why this had to be fixed before it could be offered.
+
+**Secondary benefit.** On the 1,884 recordings where the tachometer estimate was
+in range, it read a systematic **2.3% low** (median ratio of estimate to file
+name 0.977, median difference −0.79 Hz), because a recording that ends
+mid-revolution yields one fewer rising edge than it has revolutions. Reading the
+file name removes that bias as well.
+
+### 3.2 Documented limitation of the tachometer channel
+
+On **67 of 1,951 recordings — every one of them `ball_fault`** — the tachometer
+estimator overcounted rising edges, reporting up to **320.6 Hz** against a true
+50.79 Hz.
+
+The cause is in the dataset's tachometer trace on those files, not in the
+method. Measured over a seeded 40-file sample from each group:
+
+| | tach min (median) | tach max (median) | tach std (median) | DC offset |
+|---|---|---|---|---|
+| Affected (67) | −1.925 | 4.525 | **2.118** | ~0 |
+| Unaffected (1,884) | −1.376 | 4.947 | **1.742** | ~0 |
+
+The affected traces swing about **22% wider** (higher standard deviation), with
+a more negative minimum and a lower maximum. Because the estimator's threshold
+is the midpoint `(max + min) / 2`, that pulls the threshold down from ~1.97 to
+**0.80–1.27**, into the noise band, where the trace crosses it repeatedly within
+a single revolution.
+
+Evidence that the signal itself is fine: an FFT of the same tachometer channel
+recovers the correct rotation frequency to within ~1.3 Hz on all three affected
+recordings examined. The rising-edge intervals become strongly bimodal on those
+files (one had a 1.04 ms median against a 14.38 ms 90th percentile, a 14-fold
+spread) whereas unaffected files are near-constant to within about 1%. The ratio
+of estimate to true speed clusters on small integers — 2×:23, 3×:17, 4×:11,
+5×:8, 6×:4 — consistent with several counted crossings per revolution.
+
+`scripts/diagnose_speed.py` reproduces every number above and is kept in the
+repository as the evidence for this limitation.
+
+**This is a property of the dataset's tachometer channel on those files.** It is
+reported as a limitation rather than corrected, and the estimator is left
+unchanged so that `speed_hz_tach` continues to record what it actually measures.
 
 ---
 

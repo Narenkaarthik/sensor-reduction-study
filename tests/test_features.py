@@ -79,14 +79,14 @@ def test_feature_count_per_sensor(extract: ModuleType) -> None:
 
 def test_feature_column_count(synthetic_features: pd.DataFrame,
                               extract: ModuleType) -> None:
-    """The feature table has 8 x 18 = 144 feature columns plus 5 metadata columns."""
+    """The feature table has 8 x 18 = 144 feature columns plus 6 metadata columns."""
     feature_cols = [c for c in synthetic_features.columns if "__" in c]
     assert len(feature_cols) == len(SENSORS) * 18 == 144
     for sensor in SENSORS:
         owned = [c for c in feature_cols if c.startswith(f"{sensor}__")]
         assert len(owned) == 18, sensor
-    assert list(synthetic_features.columns[:5]) == extract.METADATA_COLUMNS
-    assert synthetic_features.shape[1] == 149
+    assert list(synthetic_features.columns[:6]) == extract.METADATA_COLUMNS
+    assert synthetic_features.shape[1] == 150
 
 
 def _varied_signals() -> list[np.ndarray]:

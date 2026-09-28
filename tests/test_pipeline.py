@@ -111,5 +111,5 @@ def test_extractor_runs_as_a_script(repo_root: Path, tmp_path: Path) -> None:
     out = work / "features" / "features.csv"
     assert out.exists()
     df = pd.read_csv(out)
-    assert df.shape[1] == 149
+    assert df.shape[1] == 150
     assert "Total is" in result.stderr, "the incomplete-dataset warning did not fire"
