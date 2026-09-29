@@ -20,7 +20,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from common import CLASS_ORDER, DATA_DIR, FEATURES_FILE, N_WINDOWS, SENSORS
+from common import (ALL_CHANNELS, CLASS_ORDER, DATA_DIR, EXCLUDED_CHANNELS,
+                    FEATURES_FILE, N_WINDOWS, SENSORS)
 
 pytestmark = pytest.mark.realdata
 
@@ -84,9 +85,9 @@ def test_sampled_files_have_the_expected_shape(csv_files: list[Path]) -> None:
     for index in sorted(picked):
         path = csv_files[index]
         data = pd.read_csv(path, header=None).to_numpy(dtype=np.float64)
-        assert data.shape == (EXPECTED_ROWS, len(SENSORS)), (
+        assert data.shape == (EXPECTED_ROWS, len(ALL_CHANNELS)), (
             f"{path} has shape {data.shape}, expected "
-            f"({EXPECTED_ROWS}, {len(SENSORS)})")
+            f"({EXPECTED_ROWS}, {len(ALL_CHANNELS)})")
 
 
 def test_class_counts(csv_files: list[Path]) -> None:
@@ -134,12 +135,28 @@ def test_every_recording_has_five_windows() -> None:
 
 
 def test_feature_table_shape() -> None:
-    """8 sensors x 18 features plus 6 metadata columns."""
+    """All 8 CHANNELS x 18 features plus 6 metadata columns.
+
+    Every channel is extracted, including the excluded tachometer: the
+    exclusion is at the sensor-set level. See PROTOCOL.md section 2.2.
+    """
     df = _require_features()
     feature_columns = [c for c in df.columns if "__" in c]
-    assert len(feature_columns) == len(SENSORS) * 18
-    assert df.shape[1] == len(SENSORS) * 18 + 6
+    assert len(feature_columns) == len(ALL_CHANNELS) * 18 == 144
+    assert df.shape[1] == len(ALL_CHANNELS) * 18 + 6
     assert {"speed_hz", "speed_hz_tach"} <= set(df.columns)
+    for channel in ALL_CHANNELS:
+        assert len([c for c in feature_columns
+                    if c.startswith(f"{channel}__")]) == 18, channel
+
+
+def test_excluded_channels_are_extracted_but_not_studied() -> None:
+    """The tachometer features exist in the table, but tach is not a sensor."""
+    df = _require_features()
+    for channel in EXCLUDED_CHANNELS:
+        assert channel not in SENSORS, channel
+        assert len([c for c in df.columns if c.startswith(f"{channel}__")]) == 18
+    assert len(SENSORS) == 7
 
 
 def test_speeds_are_plausible() -> None:
