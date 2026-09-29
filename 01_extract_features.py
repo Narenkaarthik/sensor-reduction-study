@@ -32,7 +32,7 @@ from numpy.typing import NDArray
 from scipy.stats import kurtosis, skew
 
 import common
-from common import (BANDS, CLASS_ORDER, FS, N_WINDOWS, SEED, SENSORS,
+from common import (ALL_CHANNELS, BANDS, CLASS_ORDER, FS, N_WINDOWS, SEED,
                     write_run_metadata)
 
 LOG = logging.getLogger(__name__)
@@ -185,14 +185,15 @@ def process_file(path: Path, rec_id: int, data_dir: Path) -> list[dict[str, obje
         ``N_WINDOWS`` row dictionaries.
 
     Raises:
-        ValueError: If the file does not have exactly ``len(SENSORS)`` columns,
+        ValueError: If the file does not have exactly ``len(ALL_CHANNELS)``
+            columns,
             is too short to window, or sits under an unknown class folder.
             Bad files are never skipped silently.
     """
     sig = pd.read_csv(path, header=None).to_numpy(dtype=np.float64)
-    if sig.ndim != 2 or sig.shape[1] != len(SENSORS):
+    if sig.ndim != 2 or sig.shape[1] != len(ALL_CHANNELS):
         raise ValueError(
-            f"{path}: expected {len(SENSORS)} columns, got shape {sig.shape}."
+            f"{path}: expected {len(ALL_CHANNELS)} columns, got shape {sig.shape}."
         )
     if sig.shape[0] != EXPECTED_ROWS:
         LOG.warning("%s: %d rows, expected %d", path, sig.shape[0], EXPECTED_ROWS)
@@ -210,7 +211,7 @@ def process_file(path: Path, rec_id: int, data_dir: Path) -> list[dict[str, obje
         )
 
     speed_hz = speed_from_filename(path)
-    speed_hz_tach = estimate_speed_hz(sig[:, SENSORS.index("tach")])
+    speed_hz_tach = estimate_speed_hz(sig[:, ALL_CHANNELS.index("tach")])
     win_len = sig.shape[0] // N_WINDOWS
 
     rows: list[dict[str, object]] = []
@@ -224,7 +225,7 @@ def process_file(path: Path, rec_id: int, data_dir: Path) -> list[dict[str, obje
             "speed_hz": speed_hz,
             "speed_hz_tach": speed_hz_tach,
         }
-        for j, sensor in enumerate(SENSORS):
+        for j, sensor in enumerate(ALL_CHANNELS):
             for name, value in window_features(segment[:, j]).items():
                 row[f"{sensor}__{name}"] = value
         rows.append(row)

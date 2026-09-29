@@ -13,9 +13,9 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from common import DATA_DIR, FS, SENSORS  # noqa: E402
+from common import ALL_CHANNELS, DATA_DIR, FS  # noqa: E402
 
-TACH = SENSORS.index("tach")
+TACH = ALL_CHANNELS.index("tach")
 
 
 def load_tach(path: Path) -> np.ndarray:

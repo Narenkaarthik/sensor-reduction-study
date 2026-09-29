@@ -43,7 +43,7 @@ TODO email}}
 \begin{abstract}
 % TODO: one paragraph. State the question (how does diagnosis performance depend
 % on the number and choice of sensors), the method (one fixed Random Forest over
-% all 255 subsets of 8 sensors, leakage-free grouped cross-validation, selection
+% all 127 subsets of 7 sensors, leakage-free grouped cross-validation, selection
 % on training data only), and the finding. No numbers until they come from
 % ../tables/.
 TODO abstract.
@@ -108,7 +108,8 @@ machine learning, MaFaulDa
 
 \subsection{Dataset}
 % TODO: MaFaulDa description \cite{mafaulda}: 1951 recordings, 6 classes,
-% 8 channels, 50 kHz, 5 s per recording, speed range.
+% 8 channels recorded, 7 used as sensors, 50 kHz, 5 s per recording, speed
+% range. State the tachometer exclusion here and cross-reference Section V.
 % TODO: state that the class label is the top-level folder and that subtype and
 % severity are recorded but not used as labels.
 %
@@ -146,7 +147,11 @@ machine learning, MaFaulDa
 % TODO: state that both use the training fold only, via an inner 75/25 split.
 
 \subsection{Exhaustive Evaluation}
-% TODO: all 255 subsets on every split; 2550 score rows.
+% TODO: all 127 subsets on every split; 1270 score rows.
+% TODO: state that the tachometer is excluded from the sensor set and why
+% (label-correlated recording artefact); see PROTOCOL.md section 2.2. Note
+% that its features are still extracted and that the 8-sensor comparison is
+% reported separately.
 % TODO: state that selected subsets are looked up rather than refit, and why
 % that is exact.
 
@@ -217,6 +222,16 @@ machine learning, MaFaulDa
   \caption{\FigSixBCaption}
   \label{fig:sensor_corr_mean}
 \end{figure}
+
+\subsection{Secondary Analysis: The Excluded Tachometer Channel}
+% TODO: run only AFTER the 7-sensor study is complete. Repeat the whole
+% pipeline with the tachometer included (8 sensors, 255 subsets) and report
+% where it ranks and what it does to the curve. If it ranks highly, that is a
+% concrete demonstration of an artefact-driven shortcut: a channel that carries
+% no fault information can still dominate a sensor ranking because its
+% recording artefact is label-correlated. Present it as a contribution and a
+% caution for other sensor-selection work, not as a result of this study.
+% See PROTOCOL.md section 2.2.
 
 \section{Discussion}
 % TODO: what the sensor-count curve implies for instrumentation decisions.

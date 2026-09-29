@@ -43,9 +43,10 @@ TABLES_DIR: Path = ROOT / "tables"
 # ----------------------------------------------------------------------------
 FS: int = 50_000                # sampling rate in Hz
 
-# Column order of every MaFaulDa CSV (the files have no header).  This order
-# defines the canonical sensor order used everywhere in the study.
-SENSORS: list[str] = [
+# Column order of every MaFaulDa CSV (the files have no header).  This is the
+# PHYSICAL channel layout of the file and must never change: it drives reading,
+# shape validation and feature extraction.  All 8 channels are extracted.
+ALL_CHANNELS: list[str] = [
     "tach",     # tachometer
     "ub_ax",    # underhang bearing accelerometer, axial
     "ub_rad",   # underhang bearing accelerometer, radial
@@ -55,6 +56,17 @@ SENSORS: list[str] = [
     "ob_tan",   # overhang bearing accelerometer, tangential
     "mic",      # microphone
 ]
+
+# Channels extracted but EXCLUDED from the study's sensor set.  The tachometer
+# carries a recording artefact that is label-correlated, so a sensor ranking
+# that included it would answer RQ3 falsely.  Its features stay in the feature
+# table as the evidence for that artefact and for the secondary 8-sensor
+# comparison.  See PROTOCOL.md section 2.2.
+EXCLUDED_CHANNELS: list[str] = ["tach"]
+
+# The sensor set of the study: 7 sensors, 127 non-empty subsets.  This order is
+# canonical for subset naming and for tie-breaking.
+SENSORS: list[str] = [c for c in ALL_CHANNELS if c not in EXCLUDED_CHANNELS]
 
 N_WINDOWS: int = 5              # equal, non-overlapping windows per recording
 
@@ -325,9 +337,10 @@ def feature_columns(df: pd.DataFrame, subset: Sequence[str]) -> list[str]:
     Raises:
         ValueError: If a sensor is unknown, or has no columns in ``df``.
     """
-    unknown = [s for s in subset if s not in SENSORS]
+    unknown = [s for s in subset if s not in ALL_CHANNELS]
     if unknown:
-        raise ValueError(f"Unknown sensor(s): {unknown}. Expected any of {SENSORS}.")
+        raise ValueError(
+            f"Unknown channel(s): {unknown}. Expected any of {ALL_CHANNELS}.")
     prefixes = tuple(f"{s}__" for s in subset)
     cols = [c for c in df.columns if c.startswith(prefixes)]
     if len(subset) > 0 and not cols:
@@ -371,12 +384,13 @@ def subset_name(subset: Sequence[str]) -> str:
     Raises:
         ValueError: If a sensor is unknown or repeated.
     """
-    unknown = [s for s in subset if s not in SENSORS]
+    unknown = [s for s in subset if s not in ALL_CHANNELS]
     if unknown:
-        raise ValueError(f"Unknown sensor(s): {unknown}. Expected any of {SENSORS}.")
+        raise ValueError(
+            f"Unknown channel(s): {unknown}. Expected any of {ALL_CHANNELS}.")
     if len(set(subset)) != len(subset):
         raise ValueError(f"Duplicate sensors in subset: {list(subset)}.")
-    return "+".join(s for s in SENSORS if s in set(subset))
+    return "+".join(s for s in ALL_CHANNELS if s in set(subset))
 
 
 # ----------------------------------------------------------------------------

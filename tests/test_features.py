@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from common import FS, SENSORS, subset_name
+from common import ALL_CHANNELS, EXCLUDED_CHANNELS, FS, SENSORS, subset_name
 
 # One second at the real sampling rate, used for the analytic cases.
 N = FS
@@ -79,10 +79,15 @@ def test_feature_count_per_sensor(extract: ModuleType) -> None:
 
 def test_feature_column_count(synthetic_features: pd.DataFrame,
                               extract: ModuleType) -> None:
-    """The feature table has 8 x 18 = 144 feature columns plus 6 metadata columns."""
+    """The feature table has 8 x 18 = 144 feature columns plus 6 metadata columns.
+
+    All EIGHT channels are extracted, including the excluded tachometer: the
+    exclusion happens at the sensor-set level, not at extraction. See
+    PROTOCOL.md section 2.2.
+    """
     feature_cols = [c for c in synthetic_features.columns if "__" in c]
-    assert len(feature_cols) == len(SENSORS) * 18 == 144
-    for sensor in SENSORS:
+    assert len(feature_cols) == len(ALL_CHANNELS) * 18 == 144
+    for sensor in ALL_CHANNELS:
         owned = [c for c in feature_cols if c.startswith(f"{sensor}__")]
         assert len(owned) == 18, sensor
     assert list(synthetic_features.columns[:6]) == extract.METADATA_COLUMNS
@@ -155,22 +160,52 @@ def test_std_would_be_caught_as_duplicate(extract: ModuleType) -> None:
 
 
 @pytest.mark.parametrize("permutation", [
-    ["tach", "ub_rad", "mic"],
-    ["mic", "tach", "ub_rad"],
-    ["ub_rad", "mic", "tach"],
-    ["mic", "ub_rad", "tach"],
+    ["ub_ax", "ub_rad", "mic"],
+    ["mic", "ub_ax", "ub_rad"],
+    ["ub_rad", "mic", "ub_ax"],
+    ["mic", "ub_rad", "ub_ax"],
 ])
 def test_subset_name_is_canonical(permutation: list[str]) -> None:
     """Any ordering of the same sensors yields one canonical name."""
-    assert subset_name(permutation) == "tach+ub_rad+mic"
+    assert subset_name(permutation) == "ub_ax+ub_rad+mic"
 
 
 def test_subset_name_rejects_bad_input() -> None:
     """Unknown or repeated sensors are errors, not silently accepted."""
     with pytest.raises(ValueError):
-        subset_name(["tach", "not_a_sensor"])
+        subset_name(["ub_ax", "not_a_sensor"])
     with pytest.raises(ValueError):
-        subset_name(["tach", "tach"])
+        subset_name(["ub_ax", "ub_ax"])
+
+
+# ---------------------------------------------------------- tach exclusion
+def test_tachometer_is_excluded_from_the_sensor_set() -> None:
+    """The study evaluates 7 sensors; the tachometer is not one of them.
+
+    It carries a label-correlated recording artefact, so including it would
+    make the RQ3 sensor ranking answer the wrong question. See PROTOCOL.md
+    section 2.2.
+    """
+    assert "tach" in ALL_CHANNELS, "the channel is still extracted"
+    assert "tach" in EXCLUDED_CHANNELS
+    assert "tach" not in SENSORS
+    assert len(SENSORS) == 7
+    assert len(ALL_CHANNELS) == 8
+    assert set(SENSORS) == set(ALL_CHANNELS) - set(EXCLUDED_CHANNELS)
+
+
+def test_tach_features_are_still_extracted() -> None:
+    """The tachometer features remain in the table as evidence."""
+    from conftest import load_script
+
+    extract = load_script("01_extract_features")
+    assert len(extract.FEATURE_NAMES) == 18
+
+
+def test_tach_features_are_present_in_the_table(synthetic_features) -> None:
+    """All 18 tachometer feature columns exist even though tach is excluded."""
+    tach_cols = [c for c in synthetic_features.columns if c.startswith("tach__")]
+    assert len(tach_cols) == 18
 
 
 def test_synthetic_table_is_well_formed(synthetic_features: pd.DataFrame) -> None:
@@ -199,7 +234,7 @@ def test_rejects_unknown_class_folder(extract: ModuleType, tmp_path) -> None:
     (root / "not-a-class").mkdir(parents=True)
     path = root / "not-a-class" / "rec.csv"
     rng = np.random.default_rng(0)
-    np.savetxt(path, rng.normal(size=(100, len(SENSORS))), delimiter=",")
+    np.savetxt(path, rng.normal(size=(100, len(ALL_CHANNELS))), delimiter=",")
     with pytest.raises(ValueError, match="not a known class"):
         extract.process_file(path, 0, root)
 

@@ -3,8 +3,8 @@
 An exhaustive sensor-subset analysis for rotating machinery fault diagnosis on
 the MaFaulDa dataset.
 
-One fixed Random Forest is trained on **every one of the 255 non-empty subsets**
-of the 8 sensors, evaluated with leakage-free cross-validation, with sensors
+One fixed Random Forest is trained on **every one of the 127 non-empty subsets**
+of the 7 sensors, evaluated with leakage-free cross-validation, with sensors
 selected using training data only. The study measures how diagnosis performance
 depends on the number and choice of sensors. It is not an attempt to maximise
 accuracy.
@@ -148,8 +148,8 @@ real-data run.
   test scores. They are not achievable in practice and are never the answer. The
   permutation-selected and forward-selected results are.
 - **H1 is judged on the fair curves.** The oracle curve is a maximum over
-  C(8,*k*) candidates, so its upward bias grows with the number of candidates and
-  peaks at *k* = 4. See PROTOCOL.md §7.
+  C(7,*k*) candidates, so its upward bias grows with the number of candidates and
+  peaks at the middle *k*. See PROTOCOL.md §7.
 - **A sensor with low permutation importance is not necessarily useless.**
   Permutation importance measures marginal contribution, so a redundant sensor
   scores near zero. Read it alongside the forward-selection order and the
@@ -164,7 +164,7 @@ real-data run.
 common.py                  all constants and shared helpers (single source of truth)
 01_extract_features.py     raw CSV -> features/features.csv
 02_checkpoint.py           go/no-go checks before the expensive run
-03_run_experiments.py      selection + all 255 subsets on every split
+03_run_experiments.py      selection + all 127 subsets on every split
 04_analyze.py              tables, figures, hypothesis verdicts, Level F checks
 tests/                     Levels A-F
 paper/                     IEEEtran skeleton and bibliography

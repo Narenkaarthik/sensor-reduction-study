@@ -51,7 +51,9 @@ Fixed in advance; not revised after seeing any result.
 |---|---|---|
 | Dataset | MaFaulDa (UFRJ), 1,951 recordings | Public, multi-sensor, multi-fault; allows exhaustive subset analysis |
 | Sampling rate | 50 kHz | Property of the dataset |
-| Sensors | 8 channels, fixed order `tach, ub_ax, ub_rad, ub_tan, ob_ax, ob_rad, ob_tan, mic` | The CSV column order; defines the canonical subset naming |
+| Channels extracted | 8, fixed order `tach, ub_ax, ub_rad, ub_tan, ob_ax, ob_rad, ob_tan, mic` (`ALL_CHANNELS`) | The CSV column order |
+| **Sensors studied** | **7: `ALL_CHANNELS` minus `tach`** (`SENSORS`) | The tachometer is excluded; see section 2.2 |
+| Subsets | **127** non-empty subsets of 7 sensors | 2^7 - 1 |
 | Classes | 6, from the top-level folder name | The documented class structure |
 | Deeper folders | Stored as `condition_path`, never used as a label | Subtype and severity are not the classification target |
 | Class counts | Printed, never hardcoded; a total other than 1,951 raises a warning | Detects an incomplete download instead of silently analysing partial data |
@@ -83,6 +85,68 @@ Two notes on provenance:
   compares the actual top-level folder names against `CLASS_ORDER`. If the real
   names differ, that is reported as a finding; `CLASS_ORDER` is not adapted to
   fit them.
+
+
+### 2.2 The tachometer is excluded from the sensor set
+
+**Decided 2026-09-29, AFTER data processing began and BEFORE any model was
+fitted or any score consulted.** No classifier had been run on the real data at
+the time of this decision; it rests entirely on the distributional evidence
+below and on what the tachometer is for.
+
+**The study evaluates 7 sensors and 127 non-empty subsets.** The tachometer
+channel is still extracted and its 18 features remain in `features.csv`; the
+exclusion is at the sensor-set level, not at extraction.
+
+**Why.**
+
+1. **The channel carries a recording artefact, not a fault signature.** On 67
+   recordings the tachometer trace separates from non-ball-fault windows at
+   Cohen's *d* up to **6.6**, and from OTHER `ball_fault` recordings at *d* up
+   to **4.5**. A genuine fault signature would not separate a condition from
+   other recordings of that same condition.
+2. **The artefact is label-correlated.** All 67 affected recordings are labelled
+   `underhang` (59, 10.6% of that class) or `overhang` (8, 1.6%); no other class
+   is touched. Any model including `tach` can use it as a shortcut that has
+   nothing to do with machine physics.
+3. **RQ3 asks which sensors carry diagnostic information.** A ranking
+   contaminated by an artefact would answer that question falsely, and the
+   ranking is a headline result of this study.
+4. **A partial fix is not defensible.** Dropping the 67 recordings, or dropping
+   the affected features, would remove only the portion we happened to detect.
+   We could not demonstrate that the artefact was gone rather than merely
+   hidden below our detection threshold.
+5. **The tachometer is instrumentation, not condition monitoring.** It measures
+   shaft speed. Excluding it makes this a cleaner test of the sensor-placement
+   question an engineer actually faces: which accelerometers and microphone to
+   install.
+
+**Measured evidence.** Three-way comparison, A = the 67 affected recordings
+(335 windows), B = `ball_fault` recordings with a usable tachometer reading
+(1,280 windows), C = all non-`ball_fault` windows (8,140):
+
+| Tach feature | *d*(A vs C) | *d*(B vs C) | *d*(A vs B) |
+|---|---|---|---|
+| `band_1000_2000` | **6.584** | −0.358 | 3.856 |
+| `band_5_250` | −5.386 | 0.310 | −3.661 |
+| `band_10000_25000` | 5.332 | −0.430 | 3.809 |
+| `rms` | 3.927 | −0.361 | 4.542 |
+| `skewness` | −3.818 | 0.341 | −4.436 |
+
+The tachometer does **not** separate `ball_fault` in general — every B-vs-C
+effect is |*d*| ≤ 0.43. The effect lives entirely in the 67 affected
+recordings. `scripts/diagnose_speed.py` reproduces these numbers.
+
+**What this costs.** The full configuration is now 7 sensors rather than 8, and
+the exhaustive sweep is 127 subsets per split rather than 255, so 10 × 127 =
+**1,270 score rows** for a full run.
+
+**Secondary analysis, deferred.** Once the 7-sensor study is complete, the whole
+pipeline will be repeated with the tachometer included (8 sensors, 255 subsets)
+to report where it ranks and what it does to the curve. If it ranks highly, that
+is a concrete demonstration of an artefact-driven shortcut and becomes a short
+subsection of the paper. It is reported as a contribution, not as the study's
+result. It has not been run.
 
 ---
 
@@ -286,15 +350,14 @@ The **primary H1 verdict is taken from the fair curves** — permutation-selecte
 and forward-selected — and both are reported. The oracle curve is reported as
 **secondary, clearly caveated** evidence.
 
-**Why.** The oracle at each *k* is a maximum over C(8,*k*) candidate subsets: 8,
-28, 56, 70, 56, 28, 8, 1 for *k* = 1…8. A maximum over more candidates carries
-more upward bias, so the oracle curve is inflated most at middle *k*, peaking at
-*k* = 4 where C(8,4) = 70, purely from maximisation and independently of any
+**Why.** The oracle at each *k* is a maximum over C(7,*k*) candidate subsets: 7,
+21, 35, 35, 21, 7, 1 for *k* = 1…7. A maximum over more candidates carries
+more upward bias, so the oracle curve is inflated most at middle *k*, peaking at the middle *k*, purely from maximisation and independently of any
 sensor effect. An apparent H1 violation at middle *k* can therefore be an
 artefact of that bias rather than evidence of a redundant or harmful sensor. The
 fair curves involve no test-set maximisation and so carry no such bias.
 
-The main table includes a **Candidates C(8,k)** column so a reader can see the
+The main table includes a **Candidates C(7,k)** column so a reader can see the
 bias source directly, and `hypotheses.txt` states the primary and secondary
 verdicts separately with the bias explained inline.
 
@@ -365,8 +428,9 @@ counterpart. A Level D test confirms a lookup equals an explicit refit exactly.
 
 ## 9. Exhaustive evaluation
 
-All 255 non-empty subsets of the 8 sensors are evaluated on every split:
-10 splits × 255 subsets = **2,550 score rows** for a full run. For each subset,
+All 127 non-empty subsets of the 7 sensors are evaluated on every split:
+10 splits × 127 subsets = **1,270 score rows** for a full run. The
+tachometer is excluded from the sensor set; see section 2.2. For each subset,
 `make_model()` is fit on the full outer training fold using only that subset's
 columns and predicts the test fold.
 

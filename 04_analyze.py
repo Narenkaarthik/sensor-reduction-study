@@ -308,6 +308,11 @@ def check_provenance(res_dir: Path) -> dict[str, object]:
 
 
 
+def _bias_peak() -> int:
+    """The k at which C(len(SENSORS), k) is largest, where oracle bias peaks."""
+    return max(range(1, len(SENSORS) + 1), key=lambda k: comb(len(SENSORS), k))
+
+
 def h1_violations(ks: list[int], curve: NDArray[np.float64]
                   ) -> list[tuple[int, int, float]]:
     """Find every consecutive step where DROPPING a sensor raises the score.
@@ -420,7 +425,7 @@ def format_main_table(table: pd.DataFrame) -> pd.DataFrame:
     out = pd.DataFrame({
         "k": table["k"],
         "n_subsets": table["n_subsets"],
-        "Candidates C(8,k)": table["n_candidates"],
+        "Candidates C(7,k)": table["n_candidates"],
         "All subsets (mean +/- sd)": [
             f"{m:.3f} +/- {s:.3f}" for m, s in zip(table["all_mean"], table["all_sd"])],
         f"{ORACLE_LABEL} best": [f"{m:.3f}" for m in table["oracle_mean"]],
@@ -450,10 +455,11 @@ def write_latex_table(table: pd.DataFrame, path: Path) -> None:
         r"\centering",
         r"\caption{Macro-F1 versus the number of sensors $k$. Each subset is "
         r"first averaged over the 10 cross-validation splits, then summarised "
-        r"across the $\binom{8}{k}$ subsets of that size. The oracle column is "
-        r"the maximum over those $\binom{8}{k}$ candidates chosen using TEST "
+        r"across the $\binom{7}{k}$ subsets of that size. The oracle column is "
+        r"the maximum over those $\binom{7}{k}$ candidates chosen using TEST "
         r"scores: it is an UPPER BOUND, not an achievable result, and its "
-        r"upward bias grows with the number of candidates, peaking at $k=4$. "
+        r"upward bias grows with the number of candidates, peaking at "
+        r"$k=3$ and $k=4$. "
         r"The permutation- and forward-selected columns are chosen on training "
         r"data only and are the honest comparison. The 10 splits are not "
         r"mutually independent.}",
@@ -462,7 +468,7 @@ def write_latex_table(table: pd.DataFrame, path: Path) -> None:
         r"\setlength{\tabcolsep}{4pt}",
         r"\begin{tabular}{crcccc}",
         r"\toprule",
-        r"$k$ & $\binom{8}{k}$ & All subsets & Oracle$^{\dagger}$ & Perm.-sel. "
+        r"$k$ & $\binom{7}{k}$ & All subsets & Oracle$^{\dagger}$ & Perm.-sel. "
         r"& Fwd.-sel. \\",
         r"\midrule",
     ]
@@ -567,12 +573,14 @@ def write_hypotheses(table: pd.DataFrame, curves: dict, full_mean: float,
     for hi, lo, rise in oracle_violations:
         out.append(f"        k={hi} -> k={lo}: rises by {rise:.4f} "
                    f"(exceeds {TOLERANCE} by {rise - TOLERANCE:.4f})")
-    out.append("      CAVEAT: the oracle at each k is a MAXIMUM over C(8,k)")
+    out.append(f"      CAVEAT: the oracle at each k is a MAXIMUM over "
+               f"C({len(SENSORS)},k)")
     out.append("      candidate subsets (" +
                ", ".join(f"k={k}:{comb(len(SENSORS), k)}" for k in ks) + "),")
     out.append("      and a maximum over more candidates carries more upward bias,")
     out.append("      so the oracle curve is inflated most at middle k (peaking at")
-    out.append(f"      k=4, where C(8,4)={comb(len(SENSORS), 4)}) purely from")
+    out.append(f"      k={_bias_peak()}, where C({len(SENSORS)},{_bias_peak()})="
+               f"{comb(len(SENSORS), _bias_peak())}) purely from")
     out.append("      maximisation and independently of any sensor effect. An")
     out.append("      apparent violation at middle k may therefore be an artefact of")
     out.append("      that bias rather than evidence of a redundant or harmful")
@@ -928,7 +936,7 @@ def write_captions(path: Path, n_splits: int, fair_k: int | None,
         corr_limit: Symmetric colour limit used by figure 6.
         corr_limit_b: Symmetric colour limit used by figure 6b.
     """
-    binom = r"\binom{8}{k}"
+    binom = rf"\binom{{{len(SENSORS)}}}{{k}}"
     pm = r"\pm"
     times = r"\times"
     not_independent = (

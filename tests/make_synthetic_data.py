@@ -3,7 +3,7 @@
 The real dataset is far too large to run tests against, so the test suite uses
 a miniature stand-in with the same *structure*: class folders at the top level,
 deeper subfolders for fault subtype and severity, and header-less CSV files
-with 8 columns in the canonical ``SENSORS`` order.
+with 8 columns in the canonical ``ALL_CHANNELS`` order.
 
 Fault signatures are injected into known channels so that correct behaviour is
 predictable.  Two channels, ``ub_ax`` and ``ob_rad``, receive noise only and
@@ -42,7 +42,7 @@ from numpy.typing import NDArray
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from common import CLASS_ORDER, FS, SENSORS  # noqa: E402
+from common import ALL_CHANNELS, CLASS_ORDER, FS  # noqa: E402
 
 LOG = logging.getLogger(__name__)
 
@@ -232,16 +232,16 @@ def make_recording(
         amplitude_scale: Multiplies every fault signature amplitude.
 
     Returns:
-        An ``(n_samples, 8)`` array with columns in ``SENSORS`` order.
+        An ``(n_samples, 8)`` array with columns in ``ALL_CHANNELS`` order.
     """
     t = np.arange(n_samples, dtype=np.float64) / FS
-    sig = rng.normal(0.0, 1.0, size=(n_samples, len(SENSORS)))
-    sig[:, SENSORS.index("tach")] = _tach_pulses(t, speed_hz) + 0.02 * rng.normal(
+    sig = rng.normal(0.0, 1.0, size=(n_samples, len(ALL_CHANNELS)))
+    sig[:, ALL_CHANNELS.index("tach")] = _tach_pulses(t, speed_hz) + 0.02 * rng.normal(
         size=n_samples
     )
     signature = _signature(label, t, speed_hz, rng, amplitude_scale)
     for sensor, component in signature.items():
-        sig[:, SENSORS.index(sensor)] += component
+        sig[:, ALL_CHANNELS.index(sensor)] += component
     return sig
 
 

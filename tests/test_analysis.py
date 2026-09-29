@@ -19,7 +19,7 @@ from common import CLASS_ORDER, SENSORS, subset_name
 from conftest import load_script
 
 RUN_TREES = 8
-N_SUBSETS = 255
+N_SUBSETS = 127          # 2**7 - 1: the tachometer is excluded
 
 # Section 11 forbids describing a low-importance sensor as useless anywhere in
 # generated output: permutation importance measures MARGINAL contribution, so a
@@ -197,11 +197,11 @@ def test_all_expected_outputs_exist(analysed) -> None:
 
 
 def test_main_table_has_one_row_per_k(analysed) -> None:
-    """Eight rows, and the per-k subset counts are the binomial coefficients."""
+    """Seven rows, and the per-k subset counts are the binomial coefficients."""
     root, _, _, _, _ = analysed
     table = pd.read_csv(root / "tables" / "table_main.csv")
     assert list(table["k"]) == list(range(1, len(SENSORS) + 1))
-    assert list(table["n_subsets"]) == [8, 28, 56, 70, 56, 28, 8, 1]
+    assert list(table["n_subsets"]) == [7, 21, 35, 35, 21, 7, 1]
     assert table["n_subsets"].sum() == N_SUBSETS
 
 
@@ -366,11 +366,11 @@ def test_main_table_reports_the_candidate_count(analysed) -> None:
     """The C(8,k) column makes the oracle's maximisation bias visible."""
     root, _, _, _, _ = analysed
     table = pd.read_csv(root / "tables" / "table_main.csv")
-    assert "Candidates C(8,k)" in table.columns
-    assert list(table["Candidates C(8,k)"]) == [8, 28, 56, 70, 56, 28, 8, 1]
+    assert "Candidates C(7,k)" in table.columns
+    assert list(table["Candidates C(7,k)"]) == [7, 21, 35, 35, 21, 7, 1]
 
     tex = (root / "tables" / "table_main.tex").read_text()
-    assert r"\binom{8}{k}" in tex
+    assert r"\binom{7}{k}" in tex
 
 
 def test_h1_primary_verdict_uses_the_fair_curves(analysed) -> None:
@@ -392,8 +392,8 @@ def test_h1_explains_the_maximisation_bias(analysed) -> None:
     """The oracle caveat names C(8,k) and where the bias peaks."""
     root, _, _, _, _ = analysed
     text = (root / "tables" / "hypotheses.txt").read_text()
-    assert "MAXIMUM over C(8,k)" in text
-    assert "k=4" in text and "C(8,4)=70" in text
+    assert "MAXIMUM over C(7,k)" in text
+    assert "C(7,3)=35" in text or "C(7,4)=35" in text
     assert "artefact" in text
 
 

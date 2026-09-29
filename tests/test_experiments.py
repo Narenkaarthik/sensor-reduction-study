@@ -24,7 +24,7 @@ from common import (METADATA_FILENAME, SENSORS, FoldScorer, feature_columns,
 from conftest import load_script
 
 RUN_TREES = 8
-N_SUBSETS = 255
+N_SUBSETS = 127          # 2**7 - 1: the tachometer is excluded
 
 
 def _md5(path: Path) -> str:
@@ -79,7 +79,7 @@ def full_run(runner: ModuleType, hard_labelled, tmp_path_factory) -> tuple:
 
 # --------------------------------------------------------------- enumeration
 def test_subset_enumeration_is_complete(runner: ModuleType) -> None:
-    """All 255 non-empty subsets, each named exactly once."""
+    """All 127 non-empty subsets of the 7 sensors, each named exactly once."""
     subsets = runner.all_subsets()
     assert len(subsets) == N_SUBSETS
     names = [subset_name(s) for s in subsets]
@@ -209,7 +209,7 @@ def test_selection_functions_refuse_test_indices(runner: ModuleType,
 # ------------------------------------------------------------- the full sweep
 @pytest.mark.slow
 def test_full_run_is_complete(full_run) -> None:
-    """10 splits x 255 subsets, with every subset appearing once per split."""
+    """10 splits x 127 subsets, with every subset appearing once per split."""
     out, _, _ = full_run
     scores = _scores(out)
     n_splits = len(list(out.glob("scores_*.csv")))
