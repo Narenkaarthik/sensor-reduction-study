@@ -5,9 +5,9 @@ For every outer split (5 folds x 2 repeats):
   a) Rank the sensors by GROUPED permutation importance, using the training
      fold only, via an inner train/validation split.
   b) Run greedy forward selection, also on the training fold only.
-  c) Train and test a model on EVERY non-empty sensor subset: 255 of them for
-     8 sensors, which includes the full configuration and all 8 single-sensor
-     models.
+  c) Train and test a model on EVERY non-empty sensor subset: 127 of them for
+     the 7 studied sensors, which includes the full configuration and every
+     single-sensor model. The tachometer is excluded; see PROTOCOL.md 2.2.
 
 (a) and (b) never see the outer test fold; this is enforced by assertions, not
 comments.  Because the model and the seed are fixed, a "selected" subset's test
@@ -67,7 +67,7 @@ def all_subsets() -> list[tuple[str, ...]]:
     """Every non-empty sensor subset, ordered by size then by ``SENSORS`` order.
 
     Returns:
-        The 255 subsets for 8 sensors.
+        The 127 subsets for the 7 studied sensors.
     """
     subsets = [c for k in range(1, len(SENSORS) + 1)
                for c in combinations(SENSORS, k)]
@@ -81,7 +81,7 @@ def draw_permutations(n_rows: int, n_repeats: int = PERM_REPEATS
                       ) -> list[NDArray[np.int64]]:
     """Draw the row permutations used by the grouped permutation importance.
 
-    Drawn ONCE per split and reused for all 8 sensors, so the per-sensor drops
+    Drawn ONCE per split and reused for every sensor, so the per-sensor drops
     are paired (common random numbers).  The ranking comes from comparing
     sensors against each other, so holding the randomness fixed removes shuffle
     noise from that comparison.

@@ -68,7 +68,7 @@ def first_split(hard_labelled) -> tuple:
 def full_run(runner: ModuleType, hard_labelled, tmp_path_factory) -> tuple:
     """One complete synthetic run over all 10 outer splits.
 
-    Module-scoped because 10 splits x 255 subsets is the most expensive fixture
+    Module-scoped because 10 splits x 127 subsets is the most expensive fixture
     in the suite; the completeness, resume and lookup tests all read it.
     """
     df, y = hard_labelled
@@ -286,7 +286,7 @@ def test_selected_score_equals_an_explicit_refit(full_run) -> None:
 
 @pytest.mark.slow
 def test_every_subset_is_scored_on_the_same_label_set(full_run) -> None:
-    """One label set per fold, recorded once and shared by all 255 subsets."""
+    """One label set per fold, recorded once and shared by all 127 subsets."""
     out, df, y = full_run
     for path in sorted(out.glob("selection_*.json")):
         entry = json.loads(path.read_text())

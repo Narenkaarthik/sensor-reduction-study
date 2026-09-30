@@ -7,7 +7,7 @@ Four checks, all on repeat 0 only (5 folds), so the answer arrives in minutes:
      large gap means windows from one recording were leaking across the
      train/test boundary and inflating the naive score.
   2. Baseline.  Full-sensor macro-F1 under the grouped split.
-  3. Single-sensor models.  If one sensor alone already matches all eight, the
+  3. Single-sensor models.  If one sensor alone already matches the full set,
      sensor-count curve will be flat and the study has nothing to measure.
   4. Sanity baselines.  Shuffled labels must collapse to chance, and the model
      must beat a most-frequent-class dummy by a wide margin.  If either fails,
@@ -43,7 +43,7 @@ LOG = logging.getLogger(__name__)
 
 Split = tuple[NDArray[np.int64], NDArray[np.int64]]
 
-# A single sensor within this margin of all eight leaves nothing to measure.
+# A single sensor within this margin of the full set leaves nothing to measure.
 CEILING_F1 = 0.99
 
 
@@ -177,11 +177,12 @@ def decide(full: float, best_single: float, best_sensor: str) -> str:
         LOG.warning("  -> rerun with --split speed, so whole speed bands are held out.")
     elif gap <= TOLERANCE:
         verdict = "WARNING"
-        LOG.warning("One sensor already matches all eight; the curve may be flat.")
+        LOG.warning("One sensor already matches all %d; the curve may be flat.",
+                    len(SENSORS))
         LOG.warning("  -> consider --split speed before the full experiment.")
     else:
         verdict = "OK"
-        LOG.info("OK: there is room between one sensor and all eight.")
+        LOG.info("OK: there is room between one sensor and all %d.", len(SENSORS))
         LOG.info("  -> proceed to 03_run_experiments.py with this split.")
 
     if best_sensor == "tach":

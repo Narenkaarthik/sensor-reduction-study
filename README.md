@@ -87,7 +87,7 @@ full-sensor baseline, every single-sensor model, the shuffled-label and dummy
 sanity baselines, and **class coverage per speed band and per test fold**. Read
 the coverage section before choosing a split mode.
 
-- `CEILING EFFECT` — one sensor already matches all eight and the score is at
+- `CEILING EFFECT` — one sensor already matches the full set and the score is at
   0.99. Rerun steps 2–4 with `--split speed`.
 - `WARNING` — the curve may be flat; consider `--split speed`.
 - `OK` — proceed with this split.

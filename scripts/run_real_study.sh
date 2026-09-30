@@ -76,7 +76,7 @@ $PY -m pytest -m realdata -s
 #   1. the leakage check: naive random-window split vs the grouped split,
 #      and the inflation between them
 #   2. the full-sensor baseline
-#   3. all 8 single-sensor scores
+#   3. every single-sensor score
 #   4. the shuffled-label and most-frequent-dummy sanity baselines
 #   5. the decision: OK / WARNING / CEILING EFFECT, plus a warning if the
 #      tachometer is the single best sensor
@@ -104,7 +104,7 @@ $PY 03_run_experiments.py --split "$SPLIT" --dry-run
 
 # >>> STOP. Approve the projection before committing to the full run. <<<
 
-# The full run: 10 splits x 255 subsets = 2,550 score rows. Hours. It logs the
+# The full run: 10 splits x 127 subsets = 1,270 score rows. Hours. It logs the
 # elapsed time per split and a running estimate of the time remaining, and
 # resumes from where it stopped if interrupted, so rerunning the same command
 # after a failure is safe and skips completed splits.
@@ -114,7 +114,7 @@ $PY 03_run_experiments.py --split "$SPLIT"
 # ---------------------------------------------------------------------------
 # (f) Analysis                                    >>> REPORT VERDICTS <<<
 # ---------------------------------------------------------------------------
-# --expect-full-run makes Level F demand the complete 10-split, 2,550-row
+# --expect-full-run makes Level F demand the complete 10-split, 1,270-row
 # result set rather than accepting whatever is present. Level F runs before
 # anything is written, so a failure leaves no partial output behind.
 #

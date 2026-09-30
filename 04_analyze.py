@@ -894,7 +894,7 @@ def mean_absolute_feature_correlation(features: pd.DataFrame,
                                       feature_names: list[str]) -> pd.DataFrame:
     """Mean |Spearman rho| between sensors, averaged over matched features.
 
-    For each of the 18 features, the 8 sensors' columns for THAT feature are
+    For each of the 18 features, every sensor's column for THAT feature is
     correlated with each other; the absolute correlations are then averaged
     over the features.  This measures redundancy across the whole feature set
     rather than through RMS alone, which is a single amplitude summary.
@@ -1107,7 +1107,8 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--split", default="recording", choices=["recording", "speed"],
                     help="which results directory to analyse")
     ap.add_argument("--expect-full-run", action="store_true",
-                    help="require the full 10-split, 2550-row result set")
+                    help="require the full 10-split result set "
+                         f"({N_REPEATS * N_SPLITS * N_SUBSETS} rows)")
     args = ap.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(message)s")
 

@@ -261,8 +261,9 @@ not tuned.
 | Decision | Value | Why |
 |---|---|---|
 | Outer splits | `StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=SEED+r)`, repeats r = 0, 1 | 5 × 2 = 10 paired scores; 5 alone cannot reach p < 0.05 in a one-sided Wilcoxon test |
-| Default grouping | `recording_id` | The five windows of one recording are near-duplicates; splitting them across the boundary leaks |
-| Fallback grouping | Speed band | Holds out whole rotation speeds, so the model is tested on speeds it never saw. Used only if the recording split shows a ceiling effect |
+| Grouping rationale | Never split a unit of measurement | The five windows of one recording are near-duplicates; splitting them across the boundary leaks |
+| **Primary grouping** | **Speed band** | Holds out whole rotation speeds, so the model is tested on speeds it never saw; see section 5.2 |
+| Secondary grouping | `recording_id` | Reported as a robustness analysis; see section 5.2 |
 | Inner split | First split of `StratifiedGroupKFold(n_splits=4, shuffle=True, random_state=SEED)` on the training fold, grouped by recording | Roughly 75/25; the only data available to selection |
 | Test-fold isolation | Enforced by assertions in `common.assert_no_test_indices`, called by every selection and fitting path | A leak fails the run loudly instead of quietly inflating a score |
 
@@ -299,6 +300,51 @@ every class in every fold. The smaller default fixture (10–14 per class) canno
 support speed mode at all, and `choose_speed_q` correctly refuses to split it.
 This is a test-fixture decision only; it does not touch the protocol applied to
 real data.
+
+
+### 5.2 Which split mode is primary
+
+**Decided 2026-09-30, after the checkpoint and before any experiment was run.**
+
+**`speed` is the PRIMARY protocol. `recording` is reported as a secondary
+robustness analysis.** Both are run in full and both are reported. Neither is
+selected on the basis of which produced a more interesting result, and this
+decision was recorded before `03_run_experiments.py` was run in either mode.
+
+The measured checkpoint figures behind the decision:
+
+| | recording | speed |
+|---|---|---|
+| Full configuration (7 sensors) | 0.9971 ± 0.0038 | 0.9917 ± 0.0066 |
+| Best single sensor | `ub_rad` 0.9770 | `ub_rad` 0.8799 |
+| **Dynamic range (full − best single)** | **0.0201** | **0.1119** |
+| Naive-split inflation | +0.0027 | +0.0081 |
+
+**Why `speed` is primary.**
+
+1. **Dynamic range.** Recording mode spans only 0.020 macro-F1 between the best
+   single sensor and all seven — barely twice the 0.01 comparability threshold.
+   The sensor-count curve has almost no room to move, so RQ1 cannot be answered
+   informatively under it. Speed mode spans 0.112, five and a half times wider.
+2. **External validity.** Holding out whole rotation-speed bands tests
+   generalisation to unseen operating speeds, which is the realistic deployment
+   condition for variable-speed machinery. Holding out recordings tests only
+   generalisation to unseen recordings at speeds already observed.
+3. **Leakage sensitivity.** The naive-split inflation is three times larger
+   under speed grouping (+0.0081 against +0.0027), so speed mode is the more
+   demanding evaluation.
+
+**The formal `CEILING EFFECT` rule did not fire in either mode.** It requires
+both a full score at or above 0.99 AND a gap to the best single sensor within
+`TOLERANCE`. Both modes met the first condition; neither met the second
+(0.0201 and 0.1119 against a 0.01 threshold), so the rule returned `OK` for
+both. **This decision is therefore made on dynamic range, which that rule does
+not capture.** The rule is left unchanged: it is a guard against a degenerate
+study, not a split-mode selector.
+
+Both modes use the same speed banding, which `choose_speed_q` accepted at the
+first candidate: `q=10`, ten bands, every band carrying all six classes and
+every test fold carrying all six.
 
 ---
 
@@ -377,7 +423,7 @@ new.
 
 **Common random numbers.** The `PERM_REPEATS = 5` permutations are drawn **once
 per split** with `np.random.default_rng(SEED)` and the *same list is reused for
-all 8 sensors*, so the per-sensor drops are paired. The ranking comes from
+every sensor*, so the per-sensor drops are paired. The ranking comes from
 comparing sensors against each other, so holding the randomness fixed removes
 shuffle noise from that comparison.
 
@@ -415,7 +461,7 @@ instead, and a test enforces it across every generated output.
 Start empty; at each step add the sensor whose addition gives the highest
 inner-validation macro-F1. Candidates are tried in `SENSORS` order and a later
 candidate must be strictly better to displace an earlier one, so ties break
-deterministically. Continue until all 8 are added.
+deterministically. Continue until all 7 are added.
 
 ### 8.4 Selected subsets are never refit
 

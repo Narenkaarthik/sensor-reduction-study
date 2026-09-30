@@ -290,7 +290,7 @@ def test_importance_table_has_one_row_per_split(analysed) -> None:
 
 
 def test_correlation_matrix_is_square_and_symmetric(analysed) -> None:
-    """The RMS correlation matrix covers all 8 sensors."""
+    """The RMS correlation matrix covers all 7 studied sensors."""
     root, _, _, _, _ = analysed
     corr = pd.read_csv(root / "tables" / "sensor_rms_correlation.csv", index_col=0)
     assert list(corr.columns) == SENSORS
@@ -363,7 +363,7 @@ def test_analysis_is_reproducible(analyzer: ModuleType, analysed,
 
 # --------------------------------------------------------------- Phase 5 additions
 def test_main_table_reports_the_candidate_count(analysed) -> None:
-    """The C(8,k) column makes the oracle's maximisation bias visible."""
+    """The C(7,k) column makes the oracle's maximisation bias visible."""
     root, _, _, _, _ = analysed
     table = pd.read_csv(root / "tables" / "table_main.csv")
     assert "Candidates C(7,k)" in table.columns
@@ -389,7 +389,7 @@ def test_h1_primary_verdict_uses_the_fair_curves(analysed) -> None:
 
 
 def test_h1_explains_the_maximisation_bias(analysed) -> None:
-    """The oracle caveat names C(8,k) and where the bias peaks."""
+    """The oracle caveat names C(7,k) and where the bias peaks."""
     root, _, _, _, _ = analysed
     text = (root / "tables" / "hypotheses.txt").read_text()
     assert "MAXIMUM over C(7,k)" in text
