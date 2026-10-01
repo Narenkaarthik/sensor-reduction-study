@@ -1,4 +1,4 @@
-k,n_subsets,"Candidates C(7,k)",All subsets (mean +/- sd),"Oracle (upper bound, test-selected) best",Oracle subset,Perm.-selected (mean +/- sd),Perm. pct. rank,Perm. p (vs median),Forward-selected (mean +/- sd),Fwd. pct. rank,Fwd. p (vs median)
+k,n_subsets,"Candidates C(8,k)",All subsets (mean +/- sd),"Oracle (upper bound, test-selected) best",Oracle subset,Perm.-selected (mean +/- sd),Perm. pct. rank,Perm. p (vs median),Forward-selected (mean +/- sd),Fwd. pct. rank,Fwd. p (vs median)
 1,8,8,0.728 +/- 0.196,0.880,ub_rad,0.871 +/- 0.058,72,0.0039,0.882 +/- 0.098,78,0.0010
 2,28,28,0.891 +/- 0.065,0.967,ub_tan+mic,0.948 +/- 0.045,76,0.0010,0.938 +/- 0.066,73,0.0010
 3,56,56,0.941 +/- 0.030,0.984,ub_tan+ob_ax+mic,0.973 +/- 0.038,80,0.0010,0.949 +/- 0.052,56,0.2031

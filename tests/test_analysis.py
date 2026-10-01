@@ -362,12 +362,13 @@ def test_analysis_is_reproducible(analyzer: ModuleType, analysed,
 
 
 # --------------------------------------------------------------- Phase 5 additions
-def test_main_table_reports_the_candidate_count(analysed) -> None:
+def test_main_table_reports_the_candidate_count(analyzer, analysed) -> None:
     """The C(7,k) column makes the oracle's maximisation bias visible."""
     root, _, _, _, _ = analysed
     table = pd.read_csv(root / "tables" / "recording" / "table_main.csv")
-    assert "Candidates C(7,k)" in table.columns
-    assert list(table["Candidates C(7,k)"]) == [7, 21, 35, 35, 21, 7, 1]
+    assert analyzer.candidates_column() == f"Candidates C({len(SENSORS)},k)"
+    assert analyzer.candidates_column() in table.columns
+    assert list(table[analyzer.candidates_column()]) == [7, 21, 35, 35, 21, 7, 1]
 
     tex = (root / "tables" / "recording" / "table_main.tex").read_text()
     assert r"\binom{7}{k}" in tex

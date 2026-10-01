@@ -1,0 +1,3 @@
+,normal,imbalance,horizontal-misalignment,vertical-misalignment,underhang,overhang,mean_recall
+tach,0.0286,0.2222,0.1898,0.2352,0.3366,0.5376,0.2583
+ob_rad,0.3469,0.6979,0.5817,0.5282,0.8588,0.8386,0.642

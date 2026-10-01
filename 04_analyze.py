@@ -436,6 +436,18 @@ def build_main_table(scores: pd.DataFrame, selection: dict
     return table, wide, dict(curves)
 
 
+def candidates_column() -> str:
+    """Header for the candidate-count column, resolved at CALL time.
+
+    A module-level constant would be bound at import, before the secondary
+    8-sensor script widens ``SENSORS``, and would mislabel that table.
+
+    Returns:
+        For example ``"Candidates C(7,k)"``.
+    """
+    return f"Candidates C({len(SENSORS)},k)"
+
+
 def format_main_table(table: pd.DataFrame) -> pd.DataFrame:
     """Render the numeric table into the display form saved as CSV.
 
@@ -452,7 +464,7 @@ def format_main_table(table: pd.DataFrame) -> pd.DataFrame:
     out = pd.DataFrame({
         "k": table["k"],
         "n_subsets": table["n_subsets"],
-        "Candidates C(7,k)": table["n_candidates"],
+        candidates_column(): table["n_candidates"],
         "All subsets (mean +/- sd)": [
             f"{m:.3f} +/- {s:.3f}" for m, s in zip(table["all_mean"], table["all_sd"])],
         f"{ORACLE_LABEL} best": [f"{m:.3f}" for m in table["oracle_mean"]],

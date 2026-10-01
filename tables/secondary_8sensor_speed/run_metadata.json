@@ -1,7 +1,7 @@
 {
   "script": "04_analyze.py",
-  "utc_timestamp": "2026-10-01T13:02:49+00:00",
-  "git_commit": "edb0cc6d78eda545682283abc34f916aae0e5db7",
+  "utc_timestamp": "2026-10-01T16:10:27+00:00",
+  "git_commit": "b566cd7c5c389741a18db515e9980459cc25647a",
   "git_dirty": true,
   "python_version": "3.14.2",
   "python_executable": "C:\\Users\\snare\\sensor-reduction\\.venv\\Scripts\\python.exe",
@@ -14,7 +14,7 @@
     "joblib": "1.6.0"
   },
   "seed": 42,
-  "command_line": "scripts/secondary_8sensor.py",
+  "command_line": "scripts/secondary_8sensor.py --analyse-only",
   "split_mode": "secondary_8sensor_speed",
   "results_dir": "C:\\Users\\snare\\sensor-reduction\\results\\secondary_8sensor_speed",
   "n_splits": 10,

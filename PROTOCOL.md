@@ -141,12 +141,77 @@ recordings. `scripts/diagnose_speed.py` reproduces these numbers.
 the exhaustive sweep is 127 subsets per split rather than 255, so 10 × 127 =
 **1,270 score rows** for a full run.
 
-**Secondary analysis, deferred.** Once the 7-sensor study is complete, the whole
-pipeline will be repeated with the tachometer included (8 sensors, 255 subsets)
-to report where it ranks and what it does to the curve. If it ranks highly, that
-is a concrete demonstration of an artefact-driven shortcut and becomes a short
-subsection of the paper. It is reported as a contribution, not as the study's
-result. It has not been run.
+### 2.3 The secondary 8-sensor analysis, and what it showed
+
+The deferred comparison has been **run**: the whole pipeline repeated with the
+tachometer included, 8 sensors and 255 subsets, speed mode only, 10 splits and
+2,550 rows. Outputs are under `results/`, `tables/` and
+`figures/secondary_8sensor_speed/`, kept entirely separate from the primary
+results.
+
+**The exclusion changed no conclusion.** This is recorded because it establishes
+that the decision in section 2.2 was **precautionary rather than
+result-driven**:
+
+| | 7 sensors (primary) | 8 sensors (secondary) |
+|---|---|---|
+| H1 primary verdict | SUPPORTED, 0 violations | SUPPORTED, 0 violations |
+| H2 fair *k* | 4 | 4 |
+| H2 oracle *k* | 3 | 3 |
+| Full configuration | 0.9917 ± 0.0066 | 0.9917 ± 0.0080 |
+| Oracle score at every *k* | identical | identical |
+| Permutation-selected curve | identical to 3 d.p. at every *k* | identical |
+
+The oracle subsets are the same at every *k* in both configurations: the
+tachometer never enters one. Had the exclusion been doing the work of producing
+a favourable result, these would differ.
+
+**Where the tachometer ranks.** Across the 10 splits it is last of 8 in
+permutation importance in 8 splits and 7th of 8 in the other 2 (mean position
+7.8, sd 0.40), with mean importance **+0.0002 ± 0.0003** — two orders of
+magnitude below the next-lowest sensor (`ob_tan`, +0.0023). In forward selection
+it lands at positions 4 to 7 (mean 5.6, sd 1.20).
+
+### 2.4 The artefact is learnable, which marginal importance does not show
+
+Near-zero marginal importance establishes only that the model did not **need**
+the tachometer when seven good sensors were present. Whether its artefact is
+learnable is a separate question, and it is answered by how the channel performs
+**alone**. Measured from the saved predictions of the secondary run, with no
+refitting:
+
+| Sensor alone | macro-F1 (mean ± sd) |
+|---|---|
+| `ub_rad` | 0.8799 ± 0.1030 |
+| … | … |
+| `ob_rad` | 0.6404 ± 0.1091 |
+| **`tach`** | **0.2471 ± 0.0491** |
+
+Chance for 6 balanced classes is about 0.167, so the tachometer alone scores
+**above chance**. Its per-class recall, pooled over the 10 splits, is not
+uniform:
+
+| Sensor alone | N | IMB | HM | VM | **UB** | **OB** |
+|---|---|---|---|---|---|---|
+| `tach` | 0.0286 | 0.2222 | 0.1898 | 0.2352 | **0.3366** | **0.5376** |
+| `ob_rad` (control) | 0.3469 | 0.6979 | 0.5817 | 0.5282 | 0.8588 | 0.8386 |
+
+Mean recall on the two bearing classes against the other three fault classes:
+
+| Sensor alone | underhang + overhang | IMB + HM + VM | difference |
+|---|---|---|---|
+| `tach` | 0.4371 | 0.2158 | **+0.2213** |
+| `ob_rad` (control) | 0.8487 | 0.6026 | +0.2461 |
+
+The two bearing classes are the ones containing the 67 affected recordings. The
+control sensor shows a comparable gap, so the direction is not unique to the
+tachometer; what distinguishes the tachometer is that it reaches this profile
+from a channel that measures shaft speed. `scripts/tach_learnability.py`
+reproduces every figure above from the stored predictions.
+
+**This is why the exclusion stands even though it changed no conclusion here.**
+The channel carries learnable, label-correlated structure; that it happened not
+to alter a verdict on this dataset is not a guarantee it would not on another.
 
 ---
 
@@ -639,6 +704,20 @@ concerns the propagation of scikit-learn's thread-local configuration to joblib
 workers. This study sets no such configuration, so nothing is lost. It is
 recorded as benign and was **not** suppressed, since Section 14 forbids
 silencing warnings globally.
+
+### (d) The dirty-tree warning on the secondary run
+
+The secondary run's metadata records `git_dirty: true`. Verified the same way as
+(a): at run time HEAD was `edb0cc6`, and the working tree differed from it
+**only by untracked files, all of them the run's own outputs** under `results/`,
+`tables/` and `figures/`. `git diff edb0cc6` over tracked files is empty, and
+`common.py`, `03_run_experiments.py` and `04_analyze.py` are each byte-identical
+to that commit.
+
+The flag fired because the `.gitignore` change in `edb0cc6` made those output
+directories tracked, so **any** run in progress necessarily dirties the tree
+while it writes. No code difference is involved. The check is left as it is: a
+dirty tree is worth flagging, and the verification is the answer to it.
 
 No other warning appeared in any run or analysis log. No fold in either mode
 reported fewer than 6 classes, and no Level F check failed.
