@@ -536,7 +536,11 @@ def test_provenance_warns_on_a_dirty_tree(analyzer, tmp_path, caplog) -> None:
             analyzer.check_provenance(results)
     finally:
         common.FEATURES_FILE = original
-    assert any("DIRTY" in r.message for r in caplog.records)
+    assert any("uncommitted changes to SOURCE files" in r.message
+               for r in caplog.records)
+    assert any("Output directories are excluded" in r.message
+               for r in caplog.records), (
+        "the warning must say that generated output is not what made it fire")
 
 
 def test_both_split_modes_outputs_coexist(analyzer, analysed, tmp_path) -> None:
