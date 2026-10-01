@@ -301,8 +301,9 @@ def check_provenance(res_dir: Path) -> dict[str, object]:
     dirty = [name for name, meta in inputs.items()
              if meta is not None and meta.get("git_dirty")]
     if dirty:
-        LOG.warning("Level F: %s produced with a DIRTY working tree, so the "
-                    "commit hash does not fully describe the code that ran.",
+        LOG.warning("Level F: %s produced with uncommitted changes to SOURCE "
+                    "files, so the commit hash does not fully describe the code "
+                    "that ran. Output directories are excluded from this check.",
                     ", ".join(dirty))
     return inputs
 

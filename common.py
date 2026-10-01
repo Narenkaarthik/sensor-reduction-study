@@ -594,18 +594,43 @@ TRACKED_PACKAGES: list[str] = [
     "numpy", "pandas", "scipy", "scikit-learn", "matplotlib", "joblib",
 ]
 
+# Paths whose state decides whether the working tree counts as dirty.
+#
+# SOURCE ONLY, deliberately. results/, tables/ and figures/ are tracked, so a
+# run in progress always has uncommitted output of its own; including them would
+# make the dirty flag fire on every run and mean nothing. What matters for
+# reproducibility is whether the CODE that ran matches the commit.
+SOURCE_PATHS: list[str] = [
+    "common.py",
+    "01_extract_features.py",
+    "02_checkpoint.py",
+    "03_run_experiments.py",
+    "04_analyze.py",
+    "tests",
+    "scripts",
+    "requirements.txt",
+    "requirements-lock.txt",
+]
+
 METADATA_FILENAME: str = "run_metadata.json"
 
 
 def git_state() -> dict[str, object]:
-    """Return the repository commit and whether the working tree is dirty.
+    """Return the repository commit and whether the SOURCE is dirty.
 
-    A dirty tree means the code that produced a result is not exactly what the
-    commit contains, which matters when a reviewer tries to reproduce it.
+    A dirty source tree means the code that produced a result is not exactly
+    what the commit contains, which matters when a reviewer tries to reproduce
+    it.
+
+    Dirtiness is measured over ``SOURCE_PATHS`` only.  The results, tables and
+    figures directories are tracked, so a run in progress is always writing
+    uncommitted output of its own; counting that would make the flag fire on
+    every run and carry no information.
 
     Returns:
-        ``{"commit": <sha or None>, "dirty": <bool or None>}``.  Both are None
-        when this is not a git repository or git is unavailable, which is a
+        ``{"commit": <sha or None>, "dirty": <bool or None>,
+        "dirty_scope": <the paths checked>}``.  The first two are None when
+        this is not a git repository or git is unavailable, which is a
         legitimate state rather than an error.
     """
     def run(args: list[str]) -> str | None:
@@ -614,9 +639,13 @@ def git_state() -> dict[str, object]:
 
     commit = run(["git", "rev-parse", "HEAD"])
     if commit is None:
-        return {"commit": None, "dirty": None}
-    status = run(["git", "status", "--porcelain"])
-    return {"commit": commit, "dirty": bool(status) if status is not None else None}
+        return {"commit": None, "dirty": None, "dirty_scope": list(SOURCE_PATHS)}
+    status = run(["git", "status", "--porcelain", "--", *SOURCE_PATHS])
+    return {
+        "commit": commit,
+        "dirty": bool(status) if status is not None else None,
+        "dirty_scope": list(SOURCE_PATHS),
+    }
 
 
 def package_versions() -> dict[str, str]:
@@ -644,9 +673,10 @@ def run_metadata(script: str, **extra: object) -> dict[str, object]:
     git = git_state()
     return {
         "script": script,
+        "git_dirty_scope": git["dirty_scope"],
         "utc_timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "git_commit": git["commit"],
-        "git_dirty": git["dirty"],
+        "git_dirty": git["dirty"],          # SOURCE files only; see git_state
         "python_version": sys.version.split()[0],
         "python_executable": sys.executable,
         "package_versions": package_versions(),

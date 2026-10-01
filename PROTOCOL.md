@@ -203,11 +203,68 @@ Mean recall on the two bearing classes against the other three fault classes:
 | `tach` | 0.4371 | 0.2158 | **+0.2213** |
 | `ob_rad` (control) | 0.8487 | 0.6026 | +0.2461 |
 
-The two bearing classes are the ones containing the 67 affected recordings. The
-control sensor shows a comparable gap, so the direction is not unique to the
-tachometer; what distinguishes the tachometer is that it reaches this profile
-from a channel that measures shaft speed. `scripts/tach_learnability.py`
-reproduces every figure above from the stored predictions.
+**Two reasons the above is NOT by itself evidence of artefact exploitation.**
+
+1. The elevated bearing-class recall for the tachometer (+0.2213) is **not
+   distinguishable from the `ob_rad` control** (+0.2461). A control sensor with
+   no known artefact shows the same direction and a slightly larger gap.
+2. The confusion matrix shows **prediction bias rather than class skill**. The
+   `OB` column absorbs mass from every row, including **0.310 of healthy
+   windows**, and `underhang` and `overhang` are the two largest classes.
+   Further, the artefact covers 59 of 558 `underhang` recordings (**10.6%**), so
+   an artefact-driven model would show `underhang` recall near 0.11, not the
+   observed 0.337.
+
+**Honest reading of this section alone:** the tachometer by itself scores 0.2471
+against a shuffled-label baseline of about 0.173 — weakly above chance — with no
+class-specific pattern distinguishable from a control sensor.
+`scripts/tach_learnability.py` reproduces every figure above from the stored
+predictions.
+
+### 2.5 The decisive test: was the artefact exploited?
+
+The question section 2.4 cannot answer is whether the artefact is used. It is
+answered directly by splitting the bearing-class windows into those from the 67
+**affected** recordings and those from the **unaffected** ones, and comparing
+accuracy. If a model exploits the artefact, it should do markedly better on the
+affected windows. Computed from saved predictions with no refitting
+(`scripts/artifact_exploitation.py`).
+
+Window counts, identical for every model (two repeats, so each window appears
+twice):
+
+| affected UB/OB | unaffected UB/OB | all other classes |
+|---|---|---|
+| 670 | 10,040 | 8,800 |
+
+| Model | affected | unaffected | **difference** | other classes |
+|---|---|---|---|---|
+| **`tach` alone** | **0.8239** | **0.4068** | **+0.4171** | 0.2086 |
+| `ob_rad` alone (control) | 1.0000 | 0.8390 | +0.1610 | 0.5943 |
+| all 8 sensors (tach included) | 1.0000 | 0.9984 | +0.0016 | 0.9902 |
+| all 7 sensors (tach excluded) | 1.0000 | 0.9972 | +0.0028 | 0.9911 |
+
+**The tachometer-alone model classifies affected windows far better than
+unaffected ones**: 0.8239 against 0.4068, a gap of +0.4171. The control sensor's
+gap is +0.1610, about one third as large. By the stated criterion — that a
+learnable artefact should show far higher accuracy on affected windows — the
+artefact **is** learnable and **is** used by a model that has only that channel.
+
+Two qualifications on the comparison, stated because they bear on how far it
+can be pushed:
+
+- The control's affected-window accuracy is **1.0000**, at ceiling, so its gap
+  is compressed from above and the two gaps are not measured on equal footing.
+- The full 8-sensor and 7-sensor models show **no meaningful gap** (+0.0016 and
+  +0.0028), both at or near 1.0000 on affected and unaffected windows alike.
+  With the other sensors present, affected windows are not classified
+  differently from unaffected ones.
+
+This is consistent with section 2.3: including the tachometer changed no
+conclusion, because the remaining seven sensors already classify both groups
+correctly. The exclusion remains precautionary — the channel carries exploitable
+structure, and a model given only that channel does exploit it, but on this
+dataset no model that had the other sensors needed to.
 
 **This is why the exclusion stands even though it changed no conclusion here.**
 The channel carries learnable, label-correlated structure; that it happened not

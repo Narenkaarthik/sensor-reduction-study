@@ -113,3 +113,60 @@ def test_extractor_runs_as_a_script(repo_root: Path, tmp_path: Path) -> None:
     df = pd.read_csv(out)
     assert df.shape[1] == 150
     assert "Total is" in result.stderr, "the incomplete-dataset warning did not fire"
+
+
+# ---------------------------------------------------------------------------
+# Provenance: the dirty-tree check must track SOURCE, not generated output
+# ---------------------------------------------------------------------------
+def test_dirty_check_ignores_generated_output(repo_root: Path) -> None:
+    """Writing into results/ must NOT mark the tree dirty.
+
+    results/, tables/ and figures/ are tracked, so a run in progress always has
+    uncommitted output of its own. Counting that would make the flag fire on
+    every run and carry no information.
+    """
+    from common import SOURCE_PATHS, git_state
+
+    if git_state().get("dirty"):
+        pytest.skip("source tree is already dirty; cannot test the clean case")
+
+    probe = repo_root / "results" / "_dirty_probe.tmp"
+    probe.parent.mkdir(parents=True, exist_ok=True)
+    probe.write_text("generated output, not source\n")
+    try:
+        assert git_state()["dirty"] is False, (
+            "a file written into results/ marked the tree dirty")
+    finally:
+        probe.unlink(missing_ok=True)
+
+    assert "results" not in SOURCE_PATHS
+    assert "tables" not in SOURCE_PATHS
+    assert "figures" not in SOURCE_PATHS
+
+
+def test_dirty_check_still_catches_source_changes(repo_root: Path) -> None:
+    """A change to a source file MUST still mark the tree dirty."""
+    from common import git_state
+
+    if git_state().get("dirty"):
+        pytest.skip("source tree is already dirty; cannot test the clean case")
+
+    probe = repo_root / "tests" / "_dirty_probe_source.py"
+    probe.write_text("# temporary probe\n")
+    try:
+        assert git_state()["dirty"] is True, (
+            "a new file under tests/ did not mark the tree dirty")
+    finally:
+        probe.unlink(missing_ok=True)
+
+    assert git_state()["dirty"] is False
+
+
+def test_run_metadata_records_the_dirty_scope() -> None:
+    """The metadata says which paths the dirty flag was computed over."""
+    from common import SOURCE_PATHS, run_metadata
+
+    meta = run_metadata("probe.py")
+    assert meta["git_dirty_scope"] == SOURCE_PATHS
+    assert "common.py" in meta["git_dirty_scope"]
+    assert "tests" in meta["git_dirty_scope"]
