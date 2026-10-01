@@ -1,15 +1,27 @@
-# Data, generated artefacts and environment: never committed.
+# Raw dataset and the derived feature table: never committed. The dataset is
+# downloaded by the user; features.csv is 26 MB and fully regenerable from it.
 data/
-results/
 features/
-figures/
-tables/
+*.csv.gz
+
+# The virtual environment and tooling noise.
 .venv/
 __pycache__/
-*.npz
-
-# Python / tooling noise
 *.py[cod]
 .pytest_cache/
 *.egg-info/
 .ipynb_checkpoints/
+
+# ---------------------------------------------------------------------------
+# Results, tables and figures ARE tracked.
+#
+# They are small (results about 1 MB per mode, tables and figures about 1.2 MB)
+# and they are the evidence behind every number in the paper. Tracking them
+# makes the repository self-contained: a reader can check a figure against the
+# scores it came from without re-running anything.
+#
+# Still excluded below: the quick-mode and dry-run probe directories, which are
+# smoke tests and timing probes rather than results.
+# ---------------------------------------------------------------------------
+results/quick_*/
+results/dryrun_*/

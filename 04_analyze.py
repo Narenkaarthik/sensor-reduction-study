@@ -313,6 +313,33 @@ def _bias_peak() -> int:
     return max(range(1, len(SENSORS) + 1), key=lambda k: comb(len(SENSORS), k))
 
 
+def holm_adjusted(p_values: dict[int, float]) -> dict[int, float]:
+    """Holm-Bonferroni adjustment of a family of p-values.
+
+    POST HOC and SUPPLEMENTARY. The pre-registered H3 verdict is computed on
+    the RAW p-values against alpha and is not affected by this.
+
+    Args:
+        p_values: ``{k: p}``; entries whose p is None or NaN are skipped.
+
+    Returns:
+        ``{k: adjusted_p}`` for the entries that had a p-value.
+    """
+    usable = {k: float(v) for k, v in p_values.items()
+              if v is not None and not pd.isna(v)}
+    if not usable:
+        return {}
+    ordered = sorted(usable.items(), key=lambda kv: kv[1])
+    m = len(ordered)
+    adjusted: dict[int, float] = {}
+    running = 0.0
+    for i, (k, raw) in enumerate(ordered):
+        value = (m - i) * raw
+        running = max(running, value)          # enforce monotonicity
+        adjusted[k] = min(1.0, running)
+    return adjusted
+
+
 def h1_violations(ks: list[int], curve: NDArray[np.float64]
                   ) -> list[tuple[int, int, float]]:
     """Find every consecutive step where DROPPING a sensor raises the score.
@@ -652,6 +679,31 @@ def write_hypotheses(table: pd.DataFrame, curves: dict, full_mean: float,
         out.append("")
 
     out.append("-" * 70)
+    out.append("SUPPLEMENTARY, POST HOC: HOLM-ADJUSTED p-VALUES FOR H3")
+    out.append("  NOT the pre-registered test. The H3 verdicts above stand on the")
+    out.append("  RAW p-values against alpha = " + str(ALPHA) + ", regardless of")
+    out.append("  anything below. This block adjusts the family of "
+               f"{len(SENSORS) - 1} comparisons")
+    out.append("  per strategy for multiplicity, and is reported for completeness.")
+    out.append("")
+    for strategy, label in (("perm", "Permutation-selected"),
+                            ("fwd", "Forward-selected")):
+        raw = {int(r["k"]): r[f"{strategy}_p"] for _, r in table.iterrows()
+               if int(r["k"]) < len(SENSORS)}
+        adjusted = holm_adjusted(raw)
+        out.append(f"    {label}:")
+        for k in sorted(raw):
+            if k in adjusted:
+                flag = "  significant after Holm" if adjusted[k] < ALPHA else ""
+                out.append(f"      k={k}: raw p={raw[k]:.4f}  "
+                           f"Holm-adjusted p={adjusted[k]:.4f}{flag}")
+            else:
+                out.append(f"      k={k}: raw p=--  Holm-adjusted p=--")
+        n_sig = sum(1 for v in adjusted.values() if v < ALPHA)
+        out.append(f"      {n_sig}/{len(adjusted)} survive Holm at alpha = {ALPHA}")
+        out.append("")
+
+    out.append("-" * 70)
     out.append("NOTE ON INDEPENDENCE")
     out.append("  Scores from repeated cross-validation are not fully")
     out.append(f"  independent: the {N_REPEATS} repeats reuse the same recordings,")
@@ -672,20 +724,42 @@ def write_hypotheses(table: pd.DataFrame, curves: dict, full_mean: float,
 
 
 # --------------------------------------------------------------------- figures
-def save(fig: plt.Figure, stem: str) -> None:
-    """Save a figure as both PDF and 300 dpi PNG.
+def figures_dir(split_mode: str) -> Path:
+    """Figure directory for one split mode.
+
+    Outputs are separated by mode so that running the second mode cannot
+    overwrite the first.
+
+    Args:
+        split_mode: ``"recording"`` or ``"speed"``.
+
+    Returns:
+        ``figures/<split_mode>/``.
+    """
+    return common.FIGURES_DIR / split_mode
+
+
+def tables_dir(split_mode: str) -> Path:
+    """Table directory for one split mode. See ``figures_dir``."""
+    return common.TABLES_DIR / split_mode
+
+
+def save(fig: plt.Figure, stem: str, split_mode: str) -> None:
+    """Save a figure as both PDF and 300 dpi PNG, under its mode's directory.
 
     Args:
         fig: The figure.
         stem: File name without extension.
+        split_mode: Which mode produced it.
     """
-    fig.savefig(common.FIGURES_DIR / f"{stem}.pdf")
-    fig.savefig(common.FIGURES_DIR / f"{stem}.png", dpi=DPI)
+    out = figures_dir(split_mode)
+    fig.savefig(out / f"{stem}.pdf")
+    fig.savefig(out / f"{stem}.png", dpi=DPI)
     plt.close(fig)
 
 
 def fig1_f1_vs_k(wide: pd.DataFrame, table: pd.DataFrame, curves: dict,
-                 full_mean: float) -> None:
+                 full_mean: float, split_mode: str) -> None:
     """Box plots of subset-mean macro-F1 per k, with the strategy curves over them."""
     ks = [int(k) for k in table["k"]]
     subset_mean = wide.mean()
@@ -713,10 +787,11 @@ def fig1_f1_vs_k(wide: pd.DataFrame, table: pd.DataFrame, curves: dict,
     ax.legend(fontsize=6.5, loc="lower right", framealpha=0.95, edgecolor="none")
     ax.grid(axis="y", lw=0.3, color="0.85")
     fig.tight_layout()
-    save(fig, "fig1_f1_vs_k")
+    save(fig, "fig1_f1_vs_k", split_mode)
 
 
-def fig2_sensor_importance(importance: pd.DataFrame) -> None:
+def fig2_sensor_importance(importance: pd.DataFrame,
+                           split_mode: str) -> None:
     """Mean and sd of grouped permutation importance across splits."""
     order = importance.mean().sort_values(ascending=False).index
     fig, ax = plt.subplots(figsize=(COL_W, 2.4))
@@ -731,10 +806,11 @@ def fig2_sensor_importance(importance: pd.DataFrame) -> None:
     ax.set_ylabel("Macro-F1 drop when permuted\n(marginal contribution)")
     ax.grid(axis="y", lw=0.3, color="0.85")
     fig.tight_layout()
-    save(fig, "fig2_sensor_importance")
+    save(fig, "fig2_sensor_importance", split_mode)
 
 
-def fig3_per_class_recall(recall: pd.DataFrame, ks: list[int]) -> None:
+def fig3_per_class_recall(recall: pd.DataFrame, ks: list[int],
+                          split_mode: str) -> None:
     """Per-class recall against k for the permutation-selected subsets."""
     markers = ["o", "s", "^", "v", "D", "x"]
     styles = ["-", "--", ":", "-.", (0, (3, 1, 1, 1)), (0, (5, 2))]
@@ -758,10 +834,11 @@ def fig3_per_class_recall(recall: pd.DataFrame, ks: list[int]) -> None:
               bbox_to_anchor=(0.5, 1.0), handletextpad=0.3, columnspacing=0.8)
     ax.grid(axis="y", lw=0.3, color="0.85")
     fig.tight_layout()
-    save(fig, "fig3_per_class_recall")
+    save(fig, "fig3_per_class_recall", split_mode)
 
 
-def fig4_detection_errors(errors: pd.DataFrame, ks: list[int]) -> None:
+def fig4_detection_errors(errors: pd.DataFrame, ks: list[int],
+                          split_mode: str) -> None:
     """Missed detection, false alarm and misdiagnosis against k."""
     fig, ax = plt.subplots(figsize=(COL_W, 2.4))
     for column, marker, style in [("missed_detection", "o", "-"),
@@ -778,21 +855,30 @@ def fig4_detection_errors(errors: pd.DataFrame, ks: list[int]) -> None:
     ax.legend(frameon=False, fontsize=7)
     ax.grid(axis="y", lw=0.3, color="0.85")
     fig.tight_layout()
-    save(fig, "fig4_detection_errors")
+    save(fig, "fig4_detection_errors", split_mode)
 
 
 def fig5_confusion(preds: dict, selection: dict, k_small: int,
-                   h2_supported: bool) -> None:
+                   h2_supported: bool, split_mode: str,
+                   stem: str = "fig5_confusion") -> None:
     """Row-normalised confusion matrices, full configuration versus k_small.
 
     Uses repeat 0 only, so every window is counted exactly once.
+
+    Args:
+        preds: Per-split prediction arrays.
+        selection: Per-split selection records.
+        k_small: The subset size shown in the right-hand panel.
+        h2_supported: Whether the fair H2 k exists; only affects the title note.
+        split_mode: Which mode produced these results.
+        stem: Output file stem, so more than one variant can be produced.
     """
     repeat_zero = [split for split in sorted(selection) if split[0] == 0]
     y_true = np.concatenate([preds[s]["y_true"] for s in repeat_zero])
     short = [ABBR.get(c, c) for c in CLASS_ORDER]
     full_name = subset_name(SENSORS)
 
-    note = "" if h2_supported else " (H2 not supported; k=2 shown)"
+    note = "" if h2_supported else " (H2 not supported; default k)"
     panels = [
         (f"All {len(SENSORS)} sensors", lambda s: preds[s][full_name]),
         (f"Permutation-selected, $k$={k_small}{note}",
@@ -818,11 +904,11 @@ def fig5_confusion(preds: dict, selection: dict, k_small: int,
         ax.set_ylabel("True")
         ax.set_title(title, fontsize=8)
     fig.tight_layout()
-    save(fig, "fig5_confusion")
+    save(fig, stem, split_mode)
 
 
 def correlation_heatmap(corr: pd.DataFrame, stem: str, cbar_label: str,
-                        diverging: bool = True) -> float:
+                        split_mode: str, diverging: bool = True) -> float:
     """Draw a sensor-by-sensor correlation matrix with the diagonal masked.
 
     The diagonal is 1.0 by definition and carries no information, but on a
@@ -873,21 +959,22 @@ def correlation_heatmap(corr: pd.DataFrame, stem: str, cbar_label: str,
                     color="white" if dark else "black")
     fig.colorbar(image, ax=ax, fraction=0.03, pad=0.03, label=cbar_label)
     fig.tight_layout()
-    save(fig, stem)
+    save(fig, stem, split_mode)
     return limit
 
 
-def fig6_sensor_correlation(corr: pd.DataFrame) -> float:
+def fig6_sensor_correlation(corr: pd.DataFrame, split_mode: str) -> float:
     """Spearman correlation of the RMS feature between sensors."""
     return correlation_heatmap(corr, "fig6_sensor_correlation",
-                               r"Spearman $\rho$ of RMS")
+                               r"Spearman $\rho$ of RMS", split_mode)
 
 
-def fig6b_mean_absolute_correlation(corr: pd.DataFrame) -> float:
+def fig6b_mean_absolute_correlation(corr: pd.DataFrame,
+                                    split_mode: str) -> float:
     """Mean absolute Spearman correlation over all 18 matched features."""
     return correlation_heatmap(corr, "fig6b_mean_abs_correlation",
                                r"Mean $|\rho|$ over 18 features",
-                               diverging=False)
+                               split_mode, diverging=False)
 
 
 def mean_absolute_feature_correlation(features: pd.DataFrame,
@@ -923,7 +1010,8 @@ def mean_absolute_feature_correlation(features: pd.DataFrame,
 
 
 def write_captions(path: Path, n_splits: int, fair_k: int | None,
-                   corr_limit: float, corr_limit_b: float) -> None:
+                   corr_limit: float, corr_limit_b: float,
+                   split_mode: str) -> None:
     """Write the figure captions as LaTeX macros for paper/main.tex to include.
 
     Captions are generated rather than hand-written so that what they claim
@@ -935,6 +1023,8 @@ def write_captions(path: Path, n_splits: int, fair_k: int | None,
         fair_k: The fair H2 k used in figure 5, or None when H2 failed.
         corr_limit: Symmetric colour limit used by figure 6.
         corr_limit_b: Symmetric colour limit used by figure 6b.
+        split_mode: Named in EVERY caption so a figure cannot be misfiled
+            into the paper under the wrong evaluation protocol.
     """
     binom = rf"\binom{{{len(SENSORS)}}}{{k}}"
     pm = r"\pm"
@@ -944,11 +1034,16 @@ def write_captions(path: Path, n_splits: int, fair_k: int | None,
         "cross-validation over the same recordings and are therefore not "
         "mutually independent.")
     k_shown = fair_k if fair_k is not None else 2
+    mode_name = {"speed": "held-out speed bands (PRIMARY protocol)",
+                 "recording": "held-out recordings (SECONDARY robustness "
+                              "analysis)"}.get(split_mode, split_mode)
+    mode = f"Evaluation protocol: {mode_name}. "
     h2_note = ("" if fair_k is not None else
                " H2 was not supported, so $k=2$ is shown as a default.")
 
     captions = {
         "FigOneCaption":
+            mode +
             "Macro-F1 against the number of sensors $k$. Each subset is first "
             f"averaged over the {n_splits} splits; the box plots then summarise "
             f"those per-subset means across all ${binom}$ subsets of each size. "
@@ -959,6 +1054,7 @@ def write_captions(path: Path, n_splits: int, fair_k: int | None,
             f"${binom}$ candidates selected using TEST scores and is an upper "
             "bound only. " + not_independent,
         "FigTwoCaption":
+            mode +
             "Grouped permutation importance: the drop in inner-validation "
             "macro-F1 when all 18 features of one sensor are permuted together "
             "with a shared row permutation. Bars are the mean over the "
@@ -967,21 +1063,34 @@ def write_captions(path: Path, n_splits: int, fair_k: int | None,
             "may indicate redundancy given the other sensors rather than an "
             "absence of information. " + not_independent,
         "FigThreeCaption":
+            mode +
             "Per-class recall against $k$ for the permutation-selected subsets. "
             f"Predictions are pooled across all {n_splits} splits before recall "
             "is computed. Several classes may sit at recall 1.0, where their "
             "lines coincide exactly; they are deliberately not offset or "
             "jittered. " + not_independent,
         "FigFourCaption":
+            mode +
             "Missed-detection, false-alarm and misdiagnosis rates against $k$ "
             "for the permutation-selected subsets, computed from predictions "
             f"pooled across all {n_splits} splits. " + not_independent,
         "FigFiveCaption":
+            mode +
             "Row-normalised confusion matrices for the full 8-sensor "
             "configuration and for the permutation-selected subset at "
             f"$k={k_shown}$." + h2_note + " Repeat 0 only, so every window is "
             "counted exactly once and the two panels are directly comparable.",
+        "FigFiveKOneCaption":
+            mode +
+            "Row-normalised confusion matrices for the full "
+            f"{len(SENSORS)}-sensor configuration and for the "
+            "permutation-selected SINGLE sensor ($k=1$). This is the variant "
+            "that shows where the configurations actually differ; the $k$ "
+            f"={k_shown} variant compares two near-identical configurations by "
+            "construction. Repeat 0 only, so every window is counted exactly "
+            "once and the two panels are directly comparable.",
         "FigSixCaption":
+            mode +
             "Spearman correlation of the RMS feature between sensors, over all "
             "windows. The diagonal is 1.0 by definition and is masked. The "
             "quantity is signed, so the colour scale is symmetric about zero "
@@ -989,6 +1098,7 @@ def write_captions(path: Path, n_splits: int, fair_k: int | None,
             f"(${pm}{corr_limit:.2f}$), so the real structure is visible instead "
             "of being flattened by the diagonal.",
         "FigSixBCaption":
+            mode +
             "Mean absolute Spearman correlation between sensors, averaged over "
             "all 18 matched features rather than RMS alone, over all windows. "
             "The diagonal is masked. The quantity is non-negative, so the "
@@ -1030,15 +1140,16 @@ def analyse(res_dir: Path, split_mode: str, expect_full_run: bool = False) -> di
     check_full_configuration(table, full_mean)
     check_p_values(table)
 
-    common.FIGURES_DIR.mkdir(parents=True, exist_ok=True)
-    common.TABLES_DIR.mkdir(parents=True, exist_ok=True)
+    out_figures = figures_dir(split_mode)
+    out_tables = tables_dir(split_mode)
+    out_figures.mkdir(parents=True, exist_ok=True)
+    out_tables.mkdir(parents=True, exist_ok=True)
 
-    format_main_table(table).to_csv(common.TABLES_DIR / "table_main.csv",
-                                    index=False)
-    write_latex_table(table, common.TABLES_DIR / "table_main.tex")
+    format_main_table(table).to_csv(out_tables / "table_main.csv", index=False)
+    write_latex_table(table, out_tables / "table_main.tex")
 
     fair_k = write_hypotheses(table, curves, full_mean, full_sd, len(splits),
-                              split_mode, common.TABLES_DIR / "hypotheses.txt")
+                              split_mode, out_tables / "hypotheses.txt")
 
     ks = [int(k) for k in table["k"]]
     recall_rows, error_rows = [], []
@@ -1052,40 +1163,45 @@ def analyse(res_dir: Path, split_mode: str, expect_full_run: bool = False) -> di
         error_rows.append({"k": k, **error_rates(y_true, y_pred)})
     recall_df = pd.DataFrame(recall_rows)
     errors_df = pd.DataFrame(error_rows)
-    recall_df.round(4).to_csv(common.TABLES_DIR / "table_per_class.csv", index=False)
-    errors_df.round(4).to_csv(common.TABLES_DIR / "table_detection_errors.csv",
+    recall_df.round(4).to_csv(out_tables / "table_per_class.csv", index=False)
+    errors_df.round(4).to_csv(out_tables / "table_detection_errors.csv",
                               index=False)
 
     importance = pd.DataFrame([selection[s]["perm_importance"] for s in splits])
     importance.insert(0, "fold", [s[1] for s in splits])
     importance.insert(0, "repeat", [s[0] for s in splits])
-    importance.to_csv(common.TABLES_DIR / "sensor_importance_per_split.csv",
+    importance.to_csv(out_tables / "sensor_importance_per_split.csv",
                       index=False)
 
     features = load_features()
     rms = features[[feature_columns(features, [s])[0] for s in SENSORS]]
     rms.columns = SENSORS
     corr = rms.corr(method="spearman")
-    corr.round(3).to_csv(common.TABLES_DIR / "sensor_rms_correlation.csv")
+    corr.round(3).to_csv(out_tables / "sensor_rms_correlation.csv")
 
     feature_names = sorted({c.split("__", 1)[1]
                             for c in feature_columns(features, SENSORS)})
     corr_mean_abs = mean_absolute_feature_correlation(features, feature_names)
     corr_mean_abs.round(3).to_csv(
-        common.TABLES_DIR / "sensor_mean_abs_correlation.csv")
+        out_tables / "sensor_mean_abs_correlation.csv")
 
-    fig1_f1_vs_k(wide, table, curves, full_mean)
-    fig2_sensor_importance(importance[SENSORS])
-    fig3_per_class_recall(recall_df, ks)
-    fig4_detection_errors(errors_df, ks)
-    fig5_confusion(preds, selection, fair_k if fair_k else 2, fair_k is not None)
-    corr_limit = fig6_sensor_correlation(corr)
-    corr_limit_b = fig6b_mean_absolute_correlation(corr_mean_abs)
+    fig1_f1_vs_k(wide, table, curves, full_mean, split_mode)
+    fig2_sensor_importance(importance[SENSORS], split_mode)
+    fig3_per_class_recall(recall_df, ks, split_mode)
+    fig4_detection_errors(errors_df, ks, split_mode)
+    fig5_confusion(preds, selection, fair_k if fair_k else 2,
+                   fair_k is not None, split_mode)
+    # Variant at k=1, where the two panels actually differ. The fair-H2-k
+    # variant compares two near-identical configurations by construction.
+    fig5_confusion(preds, selection, 1, True, split_mode,
+                   stem="fig5b_confusion_k1")
+    corr_limit = fig6_sensor_correlation(corr, split_mode)
+    corr_limit_b = fig6b_mean_absolute_correlation(corr_mean_abs, split_mode)
 
-    write_captions(common.FIGURES_DIR / "captions.tex", len(splits), fair_k,
-                   corr_limit, corr_limit_b)
+    write_captions(out_figures / "captions.tex", len(splits), fair_k,
+                   corr_limit, corr_limit_b, split_mode)
     write_run_metadata(
-        common.TABLES_DIR, "04_analyze.py",
+        out_tables, "04_analyze.py",
         split_mode=split_mode,
         results_dir=str(res_dir),
         n_splits=len(splits),
@@ -1095,8 +1211,8 @@ def analyse(res_dir: Path, split_mode: str, expect_full_run: bool = False) -> di
         inputs=inputs,
     )
 
-    LOG.info("Tables  -> %s", common.TABLES_DIR)
-    LOG.info("Figures -> %s", common.FIGURES_DIR)
+    LOG.info("Tables  -> %s", out_tables)
+    LOG.info("Figures -> %s", out_figures)
     return {"n_splits": len(splits), "full_mean": full_mean, "fair_k": fair_k,
             "table": table}
 
@@ -1114,7 +1230,7 @@ def main(argv: list[str] | None = None) -> None:
 
     summary = analyse(common.RESULTS_DIR / args.split, args.split,
                       args.expect_full_run)
-    print((common.TABLES_DIR / "hypotheses.txt").read_text())
+    print((tables_dir(args.split) / "hypotheses.txt").read_text())
     LOG.info("Analysed %d splits; full configuration %.4f",
              summary["n_splits"], summary["full_mean"])
 

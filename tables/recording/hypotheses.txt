@@ -1,0 +1,118 @@
+HYPOTHESIS VERDICTS
+Split mode: recording   Paired scores per test: n = 10
+Full configuration (7 sensors): 0.9973 +/- 0.0037 macro-F1
+
+Thresholds applied here, stated inline so this file is self-contained:
+  TOLERANCE = 0.01  (used by H1 and H2)
+  alpha     = 0.05  (used by H3)
+  n         = 10    (paired split scores per test; 5 folds x 2 repeats)
+
+----------------------------------------------------------------------
+H1: removing one sensor never raises mean macro-F1 by more than
+    TOLERANCE = 0.01. Checked for every consecutive pair of k
+    values (k+1 -> k).
+
+    PRIMARY VERDICT is judged on the FAIR curves only. Those subsets
+    are chosen on training data, so no test-set maximisation inflates
+    them. The oracle curve is reported below as SECONDARY evidence.
+
+    Permutation-selected (FAIR) by k:
+      k=1:0.9756, k=2:0.9920, k=3:0.9971, k=4:0.9951, k=5:0.9961, k=6:0.9971, k=7:0.9973
+      SUPPORTED (0 violation(s))
+
+    Forward-selected (FAIR) by k:
+      k=1:0.9741, k=2:0.9854, k=3:0.9906, k=4:0.9917, k=5:0.9946, k=6:0.9962, k=7:0.9973
+      SUPPORTED (0 violation(s))
+
+    PRIMARY VERDICT (fair curves): SUPPORTED
+
+    SECONDARY, for reference only: the oracle curve.
+      k=1:0.9796, k=2:0.9920, k=3:0.9971, k=4:0.9986, k=5:0.9982, k=6:0.9972, k=7:0.9973
+      no violation(s) on this curve:
+      CAVEAT: the oracle at each k is a MAXIMUM over C(7,k)
+      candidate subsets (k=1:7, k=2:21, k=3:35, k=4:35, k=5:21, k=6:7, k=7:1),
+      and a maximum over more candidates carries more upward bias,
+      so the oracle curve is inflated most at middle k (peaking at
+      k=3, where C(7,3)=35) purely from
+      maximisation and independently of any sensor effect. An
+      apparent violation at middle k may therefore be an artefact of
+      that bias rather than evidence of a redundant or harmful
+      sensor. This is why the primary verdict uses the fair curves.
+
+----------------------------------------------------------------------
+H2: some k < 7 reaches mean macro-F1 >= (full - TOLERANCE) = 0.9873.
+
+    Permutation-selected (FAIR: chosen on training data only)
+      smallest qualifying k = 2
+    Oracle (UPPER BOUND: chosen using test scores, not achievable in practice)
+      smallest qualifying k = 2
+
+    VERDICT: SUPPORTED (on the fair, permutation-selected result)
+    The FAIR number is the answer to the research question. The
+    oracle number only shows what would be possible if the best
+    subset were known in advance, which it never is.
+
+----------------------------------------------------------------------
+H3: for each k from 1 to 6, the selected subset
+    scores higher than the median of all k-sensor subsets.
+    One-sided Wilcoxon signed-rank test over the 10 paired
+    split scores, alpha = 0.05.
+
+    Permutation-selected:
+      k=1: p=0.0010, percentile rank=77  significant
+      k=2: p=0.0010, percentile rank=80  significant
+      k=3: p=0.0010, percentile rank=85  significant
+      k=4: p=0.0137, percentile rank=69  significant
+      k=5: p=0.0547, percentile rank=54
+      k=6: p=0.2500, percentile rank=43
+      VERDICT: NOT SUPPORTED (4/6 tested k values reach p < 0.05)
+
+    Forward-selected:
+      k=1: p=0.0010, percentile rank=77  significant
+      k=2: p=0.0039, percentile rank=66  significant
+      k=3: p=0.1162, percentile rank=64
+      k=4: p=0.8125, percentile rank=50
+      k=5: p=0.6328, percentile rank=54
+      k=6: p=0.4062, percentile rank=46
+      VERDICT: NOT SUPPORTED (2/6 tested k values reach p < 0.05)
+
+----------------------------------------------------------------------
+SUPPLEMENTARY, POST HOC: HOLM-ADJUSTED p-VALUES FOR H3
+  NOT the pre-registered test. The H3 verdicts above stand on the
+  RAW p-values against alpha = 0.05, regardless of
+  anything below. This block adjusts the family of 6 comparisons
+  per strategy for multiplicity, and is reported for completeness.
+
+    Permutation-selected:
+      k=1: raw p=0.0010  Holm-adjusted p=0.0059  significant after Holm
+      k=2: raw p=0.0010  Holm-adjusted p=0.0059  significant after Holm
+      k=3: raw p=0.0010  Holm-adjusted p=0.0059  significant after Holm
+      k=4: raw p=0.0137  Holm-adjusted p=0.0410  significant after Holm
+      k=5: raw p=0.0547  Holm-adjusted p=0.1094
+      k=6: raw p=0.2500  Holm-adjusted p=0.2500
+      4/6 survive Holm at alpha = 0.05
+
+    Forward-selected:
+      k=1: raw p=0.0010  Holm-adjusted p=0.0059  significant after Holm
+      k=2: raw p=0.0039  Holm-adjusted p=0.0195  significant after Holm
+      k=3: raw p=0.1162  Holm-adjusted p=0.4648
+      k=4: raw p=0.8125  Holm-adjusted p=1.0000
+      k=5: raw p=0.6328  Holm-adjusted p=1.0000
+      k=6: raw p=0.4062  Holm-adjusted p=1.0000
+      2/6 survive Holm at alpha = 0.05
+
+----------------------------------------------------------------------
+NOTE ON INDEPENDENCE
+  Scores from repeated cross-validation are not fully
+  independent: the 2 repeats reuse the same recordings,
+  so the paired scores overlap. The p-values above are therefore
+  supporting evidence alongside the effect sizes and percentile
+  ranks, not standalone proof. Say so in the paper.
+
+NOTE ON SENSOR IMPORTANCE
+  Grouped permutation importance measures a sensor's MARGINAL
+  contribution. A sensor scoring near zero may carry no
+  information, or may be redundant given the other sensors
+  present. This method cannot distinguish those two cases; the
+  forward-selection order and the sensor correlation matrix are
+  reported to help separate them.

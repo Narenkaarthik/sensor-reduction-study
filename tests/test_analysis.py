@@ -189,17 +189,17 @@ def test_all_expected_outputs_exist(analysed) -> None:
     root, _, _, _, _ = analysed
     for stem in EXPECTED_FIGURES:
         for suffix in (".pdf", ".png"):
-            path = root / "figures" / f"{stem}{suffix}"
+            path = root / "figures" / "recording" / f"{stem}{suffix}"
             assert path.exists() and path.stat().st_size > 0, path.name
     for name in EXPECTED_TABLES:
-        path = root / "tables" / name
+        path = root / "tables" / "recording" / name
         assert path.exists() and path.stat().st_size > 0, name
 
 
 def test_main_table_has_one_row_per_k(analysed) -> None:
     """Seven rows, and the per-k subset counts are the binomial coefficients."""
     root, _, _, _, _ = analysed
-    table = pd.read_csv(root / "tables" / "table_main.csv")
+    table = pd.read_csv(root / "tables" / "recording" / "table_main.csv")
     assert list(table["k"]) == list(range(1, len(SENSORS) + 1))
     assert list(table["n_subsets"]) == [7, 21, 35, 35, 21, 7, 1]
     assert table["n_subsets"].sum() == N_SUBSETS
@@ -208,7 +208,7 @@ def test_main_table_has_one_row_per_k(analysed) -> None:
 def test_statistics_are_dashed_where_they_do_not_apply(analysed) -> None:
     """Percentile rank and the p-value read ``--`` at k = 8, where one subset exists."""
     root, _, _, _, _ = analysed
-    table = pd.read_csv(root / "tables" / "table_main.csv", dtype=str)
+    table = pd.read_csv(root / "tables" / "recording" / "table_main.csv", dtype=str)
     last = table[table["k"] == str(len(SENSORS))].iloc[0]
     for column in ("Perm. pct. rank", "Perm. p (vs median)",
                    "Fwd. pct. rank", "Fwd. p (vs median)"):
@@ -218,14 +218,14 @@ def test_statistics_are_dashed_where_they_do_not_apply(analysed) -> None:
 def test_oracle_is_labelled_an_upper_bound_everywhere(analysed) -> None:
     """The oracle must be impossible to misread as an achievable result."""
     root, _, _, _, _ = analysed
-    table = pd.read_csv(root / "tables" / "table_main.csv")
+    table = pd.read_csv(root / "tables" / "recording" / "table_main.csv")
     assert any("upper bound" in c.lower() and "test-selected" in c.lower()
                for c in table.columns), table.columns.tolist()
 
-    tex = (root / "tables" / "table_main.tex").read_text().lower()
+    tex = (root / "tables" / "recording" / "table_main.tex").read_text().lower()
     assert "upper bound" in tex and "test scores" in tex
 
-    hypotheses = (root / "tables" / "hypotheses.txt").read_text().lower()
+    hypotheses = (root / "tables" / "recording" / "hypotheses.txt").read_text().lower()
     assert "upper bound" in hypotheses
     assert "chosen using test scores" in hypotheses
 
@@ -233,7 +233,7 @@ def test_oracle_is_labelled_an_upper_bound_everywhere(analysed) -> None:
 def test_hypotheses_file_states_its_thresholds_inline(analysed) -> None:
     """The verdicts are readable without the specification at hand."""
     root, _, _, _, _ = analysed
-    text = (root / "tables" / "hypotheses.txt").read_text()
+    text = (root / "tables" / "recording" / "hypotheses.txt").read_text()
     assert "TOLERANCE = 0.01" in text
     assert "alpha     = 0.05" in text
     assert "n         = 10" in text
@@ -246,7 +246,7 @@ def test_hypotheses_file_states_its_thresholds_inline(analysed) -> None:
 def test_generated_text_never_calls_a_sensor_uninformative(analysed) -> None:
     """Section 11 wording rule, enforced across every generated text output."""
     root, _, _, _, _ = analysed
-    for path in list((root / "tables").iterdir()):
+    for path in sorted(p for p in (root / "tables").rglob("*") if p.is_file()):
         text = path.read_text(errors="ignore").lower()
         for word in FORBIDDEN_WORDS:
             assert word not in text, f"{path.name} contains {word!r}"
@@ -258,7 +258,7 @@ def test_generated_text_never_calls_a_sensor_uninformative(analysed) -> None:
 def test_per_class_table_is_aligned_and_nan_safe(analysed) -> None:
     """One column per class at every k, with NaN excluded from the mean."""
     root, _, _, _, _ = analysed
-    table = pd.read_csv(root / "tables" / "table_per_class.csv")
+    table = pd.read_csv(root / "tables" / "recording" / "table_per_class.csv")
     assert list(table["k"]) == list(range(1, len(SENSORS) + 1))
     for class_name in CLASS_ORDER:
         assert class_name in table.columns, class_name
@@ -273,7 +273,7 @@ def test_per_class_table_is_aligned_and_nan_safe(analysed) -> None:
 def test_detection_error_rates_are_in_range(analysed) -> None:
     """All three error rates lie in [0, 1] at every k."""
     root, _, _, _, _ = analysed
-    table = pd.read_csv(root / "tables" / "table_detection_errors.csv")
+    table = pd.read_csv(root / "tables" / "recording" / "table_detection_errors.csv")
     for column in ("missed_detection", "false_alarm", "misdiagnosis"):
         values = table[column].to_numpy(dtype=float)
         finite = values[np.isfinite(values)]
@@ -283,7 +283,7 @@ def test_detection_error_rates_are_in_range(analysed) -> None:
 def test_importance_table_has_one_row_per_split(analysed) -> None:
     """Ten splits, one importance value per sensor in each."""
     root, _, _, _, _ = analysed
-    table = pd.read_csv(root / "tables" / "sensor_importance_per_split.csv")
+    table = pd.read_csv(root / "tables" / "recording" / "sensor_importance_per_split.csv")
     assert len(table) == 10
     assert set(SENSORS).issubset(table.columns)
     assert {"repeat", "fold"}.issubset(table.columns)
@@ -292,7 +292,7 @@ def test_importance_table_has_one_row_per_split(analysed) -> None:
 def test_correlation_matrix_is_square_and_symmetric(analysed) -> None:
     """The RMS correlation matrix covers all 7 studied sensors."""
     root, _, _, _, _ = analysed
-    corr = pd.read_csv(root / "tables" / "sensor_rms_correlation.csv", index_col=0)
+    corr = pd.read_csv(root / "tables" / "recording" / "sensor_rms_correlation.csv", index_col=0)
     assert list(corr.columns) == SENSORS
     assert list(corr.index) == SENSORS
     np.testing.assert_allclose(np.diag(corr.to_numpy()), 1.0, atol=1e-9)
@@ -348,14 +348,14 @@ def test_analysis_is_reproducible(analyzer: ModuleType, analysed,
     import common
 
     root, results, _, _, _ = analysed
-    first = (root / "tables" / "table_main.csv").read_bytes()
+    first = (root / "tables" / "recording" / "table_main.csv").read_bytes()
 
     original = (common.FIGURES_DIR, common.TABLES_DIR)
     common.FIGURES_DIR = tmp_path / "figures2"
     common.TABLES_DIR = tmp_path / "tables2"
     try:
         analyzer.analyse(results, "recording")
-        second = (common.TABLES_DIR / "table_main.csv").read_bytes()
+        second = (common.TABLES_DIR / "recording" / "table_main.csv").read_bytes()
     finally:
         common.FIGURES_DIR, common.TABLES_DIR = original
     assert first == second
@@ -365,18 +365,18 @@ def test_analysis_is_reproducible(analyzer: ModuleType, analysed,
 def test_main_table_reports_the_candidate_count(analysed) -> None:
     """The C(7,k) column makes the oracle's maximisation bias visible."""
     root, _, _, _, _ = analysed
-    table = pd.read_csv(root / "tables" / "table_main.csv")
+    table = pd.read_csv(root / "tables" / "recording" / "table_main.csv")
     assert "Candidates C(7,k)" in table.columns
     assert list(table["Candidates C(7,k)"]) == [7, 21, 35, 35, 21, 7, 1]
 
-    tex = (root / "tables" / "table_main.tex").read_text()
+    tex = (root / "tables" / "recording" / "table_main.tex").read_text()
     assert r"\binom{7}{k}" in tex
 
 
 def test_h1_primary_verdict_uses_the_fair_curves(analysed) -> None:
     """H1 is judged on the training-selected curves, with the oracle secondary."""
     root, _, _, _, _ = analysed
-    text = (root / "tables" / "hypotheses.txt").read_text()
+    text = (root / "tables" / "recording" / "hypotheses.txt").read_text()
     assert "PRIMARY VERDICT is judged on the FAIR curves only" in text
     assert "PRIMARY VERDICT (fair curves):" in text
     assert "SECONDARY, for reference only: the oracle curve" in text
@@ -391,7 +391,7 @@ def test_h1_primary_verdict_uses_the_fair_curves(analysed) -> None:
 def test_h1_explains_the_maximisation_bias(analysed) -> None:
     """The oracle caveat names C(7,k) and where the bias peaks."""
     root, _, _, _, _ = analysed
-    text = (root / "tables" / "hypotheses.txt").read_text()
+    text = (root / "tables" / "recording" / "hypotheses.txt").read_text()
     assert "MAXIMUM over C(7,k)" in text
     assert "C(7,3)=35" in text or "C(7,4)=35" in text
     assert "artefact" in text
@@ -421,7 +421,7 @@ def test_correlation_heatmaps_mask_the_diagonal_and_scale_to_data(
         analyzer, analysed) -> None:
     """The colour limit comes from the off-diagonal entries, not from the 1.0s."""
     root, _, _, _, _ = analysed
-    corr = pd.read_csv(root / "tables" / "sensor_rms_correlation.csv", index_col=0)
+    corr = pd.read_csv(root / "tables" / "recording" / "sensor_rms_correlation.csv", index_col=0)
     values = corr.to_numpy(dtype=float).copy()
     np.fill_diagonal(values, np.nan)
     largest = float(np.nanmax(np.abs(values)))
@@ -431,7 +431,8 @@ def test_correlation_heatmaps_mask_the_diagonal_and_scale_to_data(
     original = common.FIGURES_DIR
     common.FIGURES_DIR = root / "figures"
     try:
-        limit = analyzer.correlation_heatmap(corr, "probe_heatmap", "probe")
+        limit = analyzer.correlation_heatmap(corr, "probe_heatmap", "probe",
+                                             "recording")
     finally:
         common.FIGURES_DIR = original
     assert limit >= largest, "the scale must contain the data"
@@ -456,7 +457,7 @@ def test_mean_absolute_correlation_matrix_is_well_formed(
 def test_captions_state_the_aggregation(analysed) -> None:
     """Every figure caption says what was averaged over what."""
     root, _, _, _, _ = analysed
-    captions = (root / "figures" / "captions.tex").read_text()
+    captions = (root / "figures" / "recording" / "captions.tex").read_text()
     for name in ("FigOneCaption", "FigTwoCaption", "FigThreeCaption",
                  "FigFourCaption", "FigFiveCaption", "FigSixCaption",
                  "FigSixBCaption"):
@@ -475,7 +476,7 @@ def test_captions_state_the_aggregation(analysed) -> None:
 def test_run_metadata_is_written_and_traceable(analysed) -> None:
     """The analysis records its own provenance and that of its inputs."""
     root, _, _, _, _ = analysed
-    meta = json.loads((root / "tables" / "run_metadata.json").read_text())
+    meta = json.loads((root / "tables" / "recording" / "run_metadata.json").read_text())
     for key in ("script", "utc_timestamp", "git_commit", "git_dirty",
                 "python_version", "package_versions", "seed", "command_line",
                 "split_mode", "n_splits", "n_score_rows", "inputs"):
@@ -535,3 +536,72 @@ def test_provenance_warns_on_a_dirty_tree(analyzer, tmp_path, caplog) -> None:
     finally:
         common.FEATURES_FILE = original
     assert any("DIRTY" in r.message for r in caplog.records)
+
+
+def test_both_split_modes_outputs_coexist(analyzer, analysed, tmp_path) -> None:
+    """Running one mode after another must not overwrite the first.
+
+    04_analyze.py previously wrote every mode into one shared tables/ and
+    figures/, so analysing the second mode destroyed the first. Outputs are now
+    separated by split mode.
+    """
+    import common
+
+    _, results, _, _, _ = analysed
+    original = (common.FIGURES_DIR, common.TABLES_DIR)
+    common.FIGURES_DIR = tmp_path / "figures"
+    common.TABLES_DIR = tmp_path / "tables"
+    try:
+        # The same results analysed under two mode labels: enough to prove the
+        # outputs land in separate directories and both survive.
+        analyzer.analyse(results, "recording")
+        first = (common.TABLES_DIR / "recording" / "table_main.csv").read_bytes()
+        analyzer.analyse(results, "speed")
+
+        for mode in ("recording", "speed"):
+            assert (common.TABLES_DIR / mode / "table_main.csv").exists(), mode
+            assert (common.FIGURES_DIR / mode / "fig1_f1_vs_k.pdf").exists(), mode
+            assert (common.FIGURES_DIR / mode / "captions.tex").exists(), mode
+        assert (common.TABLES_DIR / "recording" / "table_main.csv").read_bytes()             == first, "the first mode's table was overwritten"
+    finally:
+        common.FIGURES_DIR, common.TABLES_DIR = original
+
+
+def test_every_caption_names_the_split_mode(analysed) -> None:
+    """A figure must be impossible to misfile into the paper under the wrong mode."""
+    root, _, _, _, _ = analysed
+    captions = (root / "figures" / "recording" / "captions.tex").read_text()
+    assert captions.count("Evaluation protocol:") >= 7
+    assert "held-out recordings" in captions
+
+
+def test_fig5_has_a_k1_variant(analysed) -> None:
+    """Both confusion-matrix variants are produced."""
+    root, _, _, _, _ = analysed
+    for stem in ("fig5_confusion", "fig5b_confusion_k1"):
+        for suffix in (".pdf", ".png"):
+            assert (root / "figures" / "recording" / f"{stem}{suffix}").exists(), stem
+
+
+def test_holm_adjustment_is_monotone_and_conservative(analyzer) -> None:
+    """Holm never reports a smaller p than the raw one, and never decreases."""
+    raw = {1: 0.001, 2: 0.02, 3: 0.04, 4: 0.3, 5: 0.5, 6: 0.9}
+    adjusted = analyzer.holm_adjusted(raw)
+    assert set(adjusted) == set(raw)
+    for k in raw:
+        assert adjusted[k] >= raw[k], k
+        assert adjusted[k] <= 1.0
+    ordered = [adjusted[k] for k in sorted(raw, key=lambda k: raw[k])]
+    assert ordered == sorted(ordered), "Holm must be monotone in the raw order"
+    assert analyzer.holm_adjusted({}) == {}
+    assert analyzer.holm_adjusted({1: None}) == {}
+
+
+def test_hypotheses_file_labels_holm_as_post_hoc(analysed) -> None:
+    """The pre-registered verdict must not appear to depend on the adjustment."""
+    root, _, _, _, _ = analysed
+    text = (root / "tables" / "recording" / "hypotheses.txt").read_text()
+    assert "SUPPLEMENTARY, POST HOC" in text
+    assert "NOT the pre-registered test" in text
+    assert "Holm-adjusted" in text
+    assert text.index("VERDICT") < text.index("SUPPLEMENTARY, POST HOC")

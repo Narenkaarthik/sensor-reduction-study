@@ -1,0 +1,29 @@
+{
+  "script": "03_run_experiments.py",
+  "utc_timestamp": "2026-10-01T09:56:12+00:00",
+  "git_commit": "1f82015dc875b6a27a9315e9b1aedb1d3abc26f6",
+  "git_dirty": false,
+  "python_version": "3.14.2",
+  "python_executable": "C:\\Users\\snare\\sensor-reduction\\.venv\\Scripts\\python.exe",
+  "package_versions": {
+    "numpy": "2.5.3",
+    "pandas": "3.0.6",
+    "scipy": "1.18.1",
+    "scikit-learn": "1.9.1",
+    "matplotlib": "3.11.2",
+    "joblib": "1.6.0"
+  },
+  "seed": 42,
+  "command_line": "03_run_experiments.py --split speed",
+  "split_mode": "speed",
+  "n_trees": 200,
+  "quick": false,
+  "n_splits_total": 10,
+  "n_splits_run_this_session": 2,
+  "n_subsets": 127,
+  "n_rows": 9755,
+  "seconds_per_split": [
+    133.7,
+    116.9
+  ]
+}

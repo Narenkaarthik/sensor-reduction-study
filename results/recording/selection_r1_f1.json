@@ -1,0 +1,84 @@
+{
+  "repeat": 1,
+  "fold": 1,
+  "label_set": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "inner_label_set": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "perm_ranking": [
+    "ub_tan",
+    "ob_ax",
+    "ub_rad",
+    "ob_rad",
+    "mic",
+    "ub_ax",
+    "ob_tan"
+  ],
+  "perm_importance": {
+    "ub_ax": 0.0024376578264009964,
+    "ub_rad": 0.06749711251402565,
+    "ub_tan": 0.22410582620073108,
+    "ob_ax": 0.14160340123684564,
+    "ob_rad": 0.032637750363736416,
+    "ob_tan": 0.0011941611978759648,
+    "mic": 0.011186294932011776
+  },
+  "forward_order": [
+    "ub_tan",
+    "mic",
+    "ub_rad",
+    "ob_tan",
+    "ub_ax",
+    "ob_rad",
+    "ob_ax"
+  ],
+  "forward_path": [
+    {
+      "k": 1,
+      "added": "ub_tan",
+      "inner_f1": 0.9807549104159223
+    },
+    {
+      "k": 2,
+      "added": "mic",
+      "inner_f1": 0.9946807300595154
+    },
+    {
+      "k": 3,
+      "added": "ub_rad",
+      "inner_f1": 0.996541826607186
+    },
+    {
+      "k": 4,
+      "added": "ob_tan",
+      "inner_f1": 0.9975098397337924
+    },
+    {
+      "k": 5,
+      "added": "ub_ax",
+      "inner_f1": 0.9993061308886938
+    },
+    {
+      "k": 6,
+      "added": "ob_rad",
+      "inner_f1": 0.998228834362186
+    },
+    {
+      "k": 7,
+      "added": "ob_ax",
+      "inner_f1": 0.996541826607186
+    }
+  ]
+}

@@ -568,6 +568,83 @@ every one of those files can be traced to the commit that produced it.
 
 ---
 
+
+## 12.1 Record of the real run
+
+Three things happened during the real run that a reader should know about. All
+three are recorded here factually; none changed a result.
+
+### (a) The Level F provenance warning fired
+
+Both analyses reported:
+
+```
+Level F: INPUTS COME FROM DIFFERENT COMMITS
+         (features=af5b0605e7aa, results=1f82015dc875)
+```
+
+The warning is correct: the feature table was extracted at `af5b0605` and the
+experiments were run at `1f82015d`. Two commits separate them, `ade6d23` and
+`1f82015`.
+
+**Verified difference.** `common.py` and `01_extract_features.py` are
+**byte-identical** across that range (`git diff --quiet` reports no change for
+either). `03_run_experiments.py` differs by **five lines, all inside
+docstrings** — "255 of them for 8 sensors" became "127 … 7 studied sensors", and
+"all 8 sensors" became "every sensor". **No executable statement changed.** The
+remaining differences are in `02_checkpoint.py`, `04_analyze.py`, documentation,
+the run script and tests.
+
+The feature table is therefore exactly what the current code produces. The
+warning is left in place and was not suppressed: it did its job, and the
+verification above is the answer to it rather than a reason to weaken the check.
+
+### (b) The speed run was terminated and resumed
+
+The first `03_run_experiments.py --split speed` invocation exited with code 4
+after completing **8 of 10 splits**, during `r1_f3`, with no Python traceback.
+The process was terminated externally rather than raising. **The cause is not
+known.**
+
+The run was resumed with the same command. Resume skipped the 8 completed
+splits and computed the remaining 2, as designed.
+
+**Determinism check.** To confirm the termination left no damage, the
+pre-termination split `r0_f0` was recomputed from scratch into a temporary
+directory and compared against the stored files:
+
+| File | Result |
+|---|---|
+| `scores_r0_f0.csv` | **byte-identical** (md5 `525d01bd370efabc79e592e278f4ed6a`) |
+| `selection_r0_f0.json` | **byte-identical** |
+| `preds_r0_f0.npz` | **byte-identical** |
+
+The stored results were not overwritten by the check. The recording-mode run
+completed in one invocation with no interruption.
+
+### (c) A benign scikit-learn warning
+
+497 instances of one warning appeared across the two runs:
+
+```
+sklearn/utils/parallel.py:144: UserWarning: `sklearn.utils.parallel.delayed`
+should be used with `sklearn.utils.parallel.Parallel` to make it possible to
+propagate the scikit-learn configuration of the current thread to the joblib
+workers.
+```
+
+It originates **inside scikit-learn**, from `RandomForestClassifier` fitting
+with `n_jobs=-1`; no code in this repository calls `sklearn.utils.parallel`. It
+concerns the propagation of scikit-learn's thread-local configuration to joblib
+workers. This study sets no such configuration, so nothing is lost. It is
+recorded as benign and was **not** suppressed, since Section 14 forbids
+silencing warnings globally.
+
+No other warning appeared in any run or analysis log. No fold in either mode
+reported fewer than 6 classes, and no Level F check failed.
+
+---
+
 ## 13. What this protocol deliberately excludes
 
 - No hyper-parameter tuning, no model selection, no feature scaling.

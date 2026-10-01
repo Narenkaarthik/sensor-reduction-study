@@ -1,0 +1,15 @@
+,strategy,1,2,3,4,5,6,7
+ub_ax,permutation,0,0,0,0,0,8,10
+ub_rad,permutation,0,0,10,10,10,10,10
+ub_tan,permutation,10,10,10,10,10,10,10
+ob_ax,permutation,0,10,10,10,10,10,10
+ob_rad,permutation,0,0,0,4,10,10,10
+ob_tan,permutation,0,0,0,0,0,2,10
+mic,permutation,0,0,0,6,10,10,10
+ub_ax,forward,0,2,4,4,8,8,10
+ub_rad,forward,8,10,10,10,10,10,10
+ub_tan,forward,2,6,6,10,10,10,10
+ob_ax,forward,0,0,4,4,6,6,10
+ob_rad,forward,0,2,2,2,4,8,10
+ob_tan,forward,0,0,4,8,10,10,10
+mic,forward,0,0,0,2,2,8,10
