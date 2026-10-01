@@ -141,6 +141,7 @@ real-data run.
 | `tables/sensor_mean_abs_correlation.csv` | Mean \|ρ\| over all 18 features |
 | `figures/captions.tex` | Generated figure captions, `\input` by the paper |
 | `*/run_metadata.json` | Commit, versions, timestamp and inputs for every step |
+| [`docs/RESULTS_INVENTORY.md`](docs/RESULTS_INVENTORY.md) | Every table and figure, what it shows, and which paper section it feeds |
 
 ## Reading the results honestly
 
@@ -169,4 +170,5 @@ common.py                  all constants and shared helpers (single source of tr
 tests/                     Levels A-F
 paper/                     IEEEtran skeleton and bibliography
 PROTOCOL.md                every fixed decision, with reasons
+docs/RESULTS_INVENTORY.md  map of every generated table and figure
 ```

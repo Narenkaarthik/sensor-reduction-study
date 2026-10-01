@@ -150,8 +150,10 @@ tachometer included, 8 sensors and 255 subsets, speed mode only, 10 splits and
 results.
 
 **The exclusion changed no conclusion.** This is recorded because it establishes
-that the decision in section 2.2 was **precautionary rather than
-result-driven**:
+that the decision in section 2.2 was **not result-driven**: it did not produce a
+more favourable outcome. It does NOT establish that the exclusion was merely
+precautionary — section 2.5 shows the channel carries a learnable shortcut, and
+supersedes that earlier reading.
 
 | | 7 sensors (primary) | 8 sensors (secondary) |
 |---|---|---|
@@ -215,9 +217,13 @@ Mean recall on the two bearing classes against the other three fault classes:
    an artefact-driven model would show `underhang` recall near 0.11, not the
    observed 0.337.
 
-**Honest reading of this section alone:** the tachometer by itself scores 0.2471
-against a shuffled-label baseline of about 0.173 — weakly above chance — with no
-class-specific pattern distinguishable from a control sensor.
+**Reading of this section alone, SUPERSEDED by section 2.5:** the tachometer by
+itself scores 0.2471 against a shuffled-label baseline of about 0.173 — weakly
+above chance — with no class-specific pattern distinguishable from a control
+sensor. **This reading is wrong, and section 2.5 corrects it.** The pooled
+per-class recall used here cannot separate the 670 affected windows from the
+10,040 unaffected ones; splitting them shows the artefact is learnable. The
+section is kept rather than deleted so the correction is visible.
 `scripts/tach_learnability.py` reproduces every figure above from the stored
 predictions.
 
@@ -260,11 +266,26 @@ can be pushed:
   With the other sensors present, affected windows are not classified
   differently from unaffected ones.
 
-This is consistent with section 2.3: including the tachometer changed no
-conclusion, because the remaining seven sensors already classify both groups
-correctly. The exclusion remains precautionary — the channel carries exploitable
-structure, and a model given only that channel does exploit it, but on this
-dataset no model that had the other sensors needed to.
+**This corrects the reading in section 2.4.** The artefact **is learnable**:
+the tachometer alone reaches 0.8239 accuracy on affected underhang/overhang
+windows against 0.4068 on unaffected ones, a gap 2.6 times the control's. The
+earlier reading — prediction bias, no class-specific pattern — was drawn from
+**pooled** per-class recall, which cannot separate the 670 affected windows from
+the 10,040 unaffected ones; pooling averages the two together and hides exactly
+the contrast that matters. The exclusion in section 2.2 was therefore **not
+merely precautionary: it removed a learnable shortcut.** Equally important, and
+inseparable from that finding: with the other seven sensors present the gap
+disappears (+0.0016 for 8 sensors, +0.0028 for 7, both at or near 1.0000 on
+affected and unaffected windows alike), so the artefact **did not distort the
+full-configuration results** — which is why the primary and supplementary
+analyses agree on every verdict. One caveat on the comparison: the control's
+affected-window accuracy is 1.0000, at ceiling, so its gap is compressed from
+above and the two gaps are not measured on equal footing.
+
+A note on method, since it cost a round of analysis: a pooled per-class summary
+could not answer this question, and only the affected/unaffected split could.
+Where a suspected artefact is confined to an identifiable subset of recordings,
+the subset has to be isolated before any comparison is informative.
 
 **This is why the exclusion stands even though it changed no conclusion here.**
 The channel carries learnable, label-correlated structure; that it happened not
