@@ -1,0 +1,45 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      # requirements.txt holds minimum constraints rather than the pinned set:
+      # requirements-lock.txt pins builds for Python 3.14, which is not what the
+      # runner has. The lock file is what reproduces the published results; this
+      # job checks the code, not the numbers.
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      # MaFaulDa is not redistributed, so the realdata tests have nothing to run
+      # against and skip themselves. Everything else runs on a seeded synthetic
+      # dataset built at test time.
+      - name: Run tests
+        run: python -m pytest -m "not realdata" -q
+
+      - name: Confirm no dataset was committed
+        run: |
+          if git ls-files | grep -E '^(data|features)/'; then
+            echo "Dataset files are tracked; they must not be."
+            exit 1
+          fi
+          echo "No dataset files tracked."

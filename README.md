@@ -1,174 +1,197 @@
+[![tests](https://github.com/Narenkaarthik/sensor-reduction-study/actions/workflows/tests.yml/badge.svg)](https://github.com/Narenkaarthik/sensor-reduction-study/actions/workflows/tests.yml)
+
 # How Many Sensors Are Enough?
 
 An exhaustive sensor-subset analysis for rotating machinery fault diagnosis on
-the MaFaulDa dataset.
+the MaFaulDa dataset: one fixed Random Forest trained on every one of the 127
+non-empty subsets of 7 sensors, evaluated with leakage-free cross-validation.
 
-One fixed Random Forest is trained on **every one of the 127 non-empty subsets**
-of the 7 sensors, evaluated with leakage-free cross-validation, with sensors
-selected using training data only. The study measures how diagnosis performance
-depends on the number and choice of sensors. It is not an attempt to maximise
-accuracy.
+![Macro-F1 against the number of sensors](figures/speed/fig1_f1_vs_k.png)
 
-Every fixed decision, and the reason for it, is in [PROTOCOL.md](PROTOCOL.md).
+**Macro-F1 against sensor count, held-out speed bands.** Box plots cover all
+C(7,*k*) subsets of each size; the overlaid curves are the oracle upper bound
+and the two honest selection strategies. Four sensors chosen on training data
+alone reach 0.984, within 0.008 of all seven. The oracle line is selected using
+test scores and is an upper bound, not an achievable result.
 
-## Setup
+## What this is
 
-Python 3.10 or newer.
+Instrumenting a machine costs money, wiring and maintenance, so it matters how
+much diagnostic performance is lost when sensors are removed. This study
+measures that on MaFaulDa (1,951 recordings, 6 fault classes, 8 channels at
+50 kHz), training one fixed Random Forest on every possible sensor subset rather
+than on a heuristic shortlist. Sensors are selected using training data only,
+and the evaluation holds out whole rotation-speed bands so the model is tested
+at speeds it never saw. Four of seven sensors reach macro-F1 0.984 against 0.992
+for all seven; a single sensor reaches 0.871.
+
+This is an empirical study, not a new method. There is no hyper-parameter
+tuning, no model selection and no attempt to maximise accuracy.
+
+## Key findings
+
+All figures are for the primary protocol (held-out speed bands) on MaFaulDa, and
+do not generalise beyond this dataset and this evaluation.
+
+- **Four sensors are enough on this dataset.** The permutation-selected 4-sensor
+  subset reaches macro-F1 0.984 ± 0.013, above the 0.9817 threshold for being
+  within 0.01 of the full 7-sensor configuration (0.9917 ± 0.0066). H2 supported.
+- **Removing a sensor never helped.** Neither honest selection curve rises by
+  more than 0.01 at any step from *k*+1 to *k*. H1 supported on both fair curves.
+- **Informed selection does not reliably beat a median subset.** H3 was **not
+  supported**: the permutation-selected subset beat the per-split median at 4 of
+  6 sensor counts, forward selection at 2 of 6 (one-sided Wilcoxon, n = 10,
+  α = 0.05). The same verdicts hold under Holm adjustment.
+- **The tachometer carries a learnable recording artefact and was excluded.** On
+  67 recordings, all `ball_fault` and all labelled `underhang` or `overhang`,
+  the channel separates at Cohen's *d* up to 6.6. A model given only the
+  tachometer classifies those affected windows at 0.824 accuracy against 0.407
+  on unaffected ones. The study therefore uses **7 sensors, not 8**.
+- **That exclusion changed no conclusion.** Re-running the whole pipeline with
+  the tachometer included gives identical H1 and H2 verdicts, identical oracle
+  subsets at every *k*, and a permutation-selected curve matching to three
+  decimal places. With the other seven sensors present the artefact is not used.
+
+## Repository structure
+
+```
+common.py                  all constants and shared helpers; single source of truth
+01_extract_features.py     raw CSV -> features/features.csv (18 features per channel)
+02_checkpoint.py           leakage, baseline and sanity checks before the main run
+03_run_experiments.py      selection plus all 127 subsets on every split
+04_analyze.py              tables, figures, hypothesis verdicts, Level F checks
+scripts/                   supplementary and diagnostic analyses, and the run script
+tests/                     test levels A-F
+results/<analysis>/        per-split scores, predictions and selection records
+tables/<analysis>/         generated tables, including the hypothesis verdicts
+figures/<analysis>/        generated figures as PDF and 300 dpi PNG
+paper/                     IEEEtran skeleton and bibliography
+docs/                      results inventory
+```
+
+There are three analyses, each with its own `results`, `tables` and `figures`
+directory: `speed` (primary), `recording` (secondary robustness) and
+`secondary_8sensor_speed` (the artefact demonstration).
+
+## Verify in 5 minutes, without the dataset
+
+The test suite runs on a seeded synthetic dataset built at run time, so the code
+can be checked without downloading 13 GB.
 
 ```bash
 python -m venv .venv
-.venv/Scripts/python.exe -m pip install -r requirements.txt   # Windows
-# source .venv/bin/activate && pip install -r requirements.txt  # Linux/macOS
-```
-
-`requirements-lock.txt` holds the exact versions the results were produced with.
-Use it to reproduce them exactly:
-
-```bash
 .venv/Scripts/python.exe -m pip install -r requirements-lock.txt
+.venv/Scripts/python.exe -m pytest -m "not slow and not realdata" -q
 ```
 
-## Dataset
+On Linux or macOS use `.venv/bin/python` throughout. The full suite is
+`python -m pytest` and takes about 7 minutes.
 
-Download MaFaulDa from the UFRJ website yourself and unzip it so the six class
-folders sit directly under `data/mafaulda/`:
+## Reproduce the results
 
-```
-data/mafaulda/
-├── normal/
-├── imbalance/
-├── horizontal-misalignment/
-├── vertical-misalignment/
-├── underhang/
-└── overhang/
-```
+1. **Get the dataset.** Download MaFaulDa from
+   [the UFRJ page](https://www02.smt.ufrj.br/~offshore/mfs/page_01.html) and
+   unzip it so the six class folders sit directly under `data/mafaulda/`:
+   `normal`, `imbalance`, `horizontal-misalignment`, `vertical-misalignment`,
+   `underhang`, `overhang`. The pipeline never downloads it.
 
-The pipeline never downloads the dataset, and `data/`, `features/`, `results/`,
-`figures/` and `tables/` are all excluded from Git.
+2. **Validate the dataset** (seconds). Checks the 1,951 file count, the shape of
+   a seeded 50-file sample, and the class folders.
+   ```bash
+   python -m pytest -m realdata -s
+   ```
 
-## Run order
+3. **Extract features** (about 3 minutes on 16 cores).
+   ```bash
+   python 01_extract_features.py
+   ```
+
+4. **Run the checkpoint** (about 5 minutes per mode). Reports leakage inflation,
+   the baseline, every single-sensor model, the sanity baselines and class
+   coverage per speed band.
+   ```bash
+   python 02_checkpoint.py --split speed
+   ```
+
+5. **Run the experiment** (about 25 minutes per mode).
+   ```bash
+   python 03_run_experiments.py --split speed
+   python 03_run_experiments.py --split recording
+   ```
+   Add `--dry-run` first to measure one split and project the total. The run
+   resumes if interrupted: rerun the same command and completed splits are
+   skipped.
+
+6. **Analyse** (about 1 minute per mode).
+   ```bash
+   python 04_analyze.py --split speed --expect-full-run
+   python 04_analyze.py --split recording --expect-full-run
+   ```
+
+`scripts/run_real_study.sh` documents this sequence with the decision points
+marked. It is documentation, not automation.
+
+## Comparing your output against ours
+
+Every random seed is fixed, so a rerun on the same data should match
+**byte for byte**, not merely closely. Feature extraction is deterministic
+across repeated runs and across worker counts, and the experiment is
+deterministic given the same feature table.
 
 ```bash
-python 01_extract_features.py
-python 02_checkpoint.py                 # stop and read the decision
-python 03_run_experiments.py
-python 04_analyze.py --expect-full-run
+md5sum results/speed/scores_r0_f0.csv
 ```
 
-| Step | Command | Expected runtime | Output |
-|---|---|---|---|
-| 1 | `01_extract_features.py` | 30–60 min (1,951 files, all cores) | `features/features.csv` |
-| 2 | `02_checkpoint.py` | 5–15 min | `results/<split>/checkpoint_results.csv` |
-| 3 | `03_run_experiments.py` | **hours**; run overnight | `results/<split>/scores_*.csv`, `preds_*.npz`, `selection_*.json` |
-| 4 | `04_analyze.py` | 1–5 min | `tables/`, `figures/` |
+Our value is `525d01bd370efabc79e592e278f4ed6a`. If yours differs, the
+difference is in the inputs or the library versions, not in sampling: compare
+`requirements-lock.txt` and the `run_metadata.json` written beside every output,
+which records the commit, the library versions and the command line.
 
-Runtimes are for a typical laptop and scale with core count. **Step 3 prints the
-elapsed time for each split and a running estimate of the time remaining**, so
-you can tell within the first split or two whether the full run is closer to
-three hours or thirty.
+Two files are expected to differ: `run_metadata.json` carries a timestamp and
+measured elapsed times, and the predictions in `preds_*.npz` are compared array
+by array rather than byte by byte.
 
-Step 3 resumes automatically: if it is interrupted, rerun the same command and it
-skips the splits already written.
+## Documentation
 
-### Before the real run
+- [PROTOCOL.md](PROTOCOL.md) — every fixed experimental decision with its
+  rationale, including the three changes made after data processing began and
+  why each was made on physical rather than empirical grounds.
+- [docs/RESULTS_INVENTORY.md](docs/RESULTS_INVENTORY.md) — every generated table
+  and figure, what it shows, and which paper section it feeds.
 
-```bash
-python 01_extract_features.py --limit 60    # seeded sample, for a smoke test
-python 03_run_experiments.py --quick        # first split only, 50 trees
-```
+## Environment
 
-Quick results go to `results/quick_<split>/` and can never mix with real ones.
-Rerunning `--quick` is a no-op rather than computing a different split.
-
-### Choosing the split mode
-
-`02_checkpoint.py` is the go/no-go gate. It reports the leakage inflation, the
-full-sensor baseline, every single-sensor model, the shuffled-label and dummy
-sanity baselines, and **class coverage per speed band and per test fold**. Read
-the coverage section before choosing a split mode.
-
-- `CEILING EFFECT` — one sensor already matches the full set and the score is at
-  0.99. Rerun steps 2–4 with `--split speed`.
-- `WARNING` — the curve may be flat; consider `--split speed`.
-- `OK` — proceed with this split.
-
-```bash
-python 02_checkpoint.py --split speed
-python 03_run_experiments.py --split speed
-python 04_analyze.py --split speed --expect-full-run
-```
-
-Speed mode holds out whole rotation-speed bands. It refuses to split at all if no
-banding puts every class in every test fold; see PROTOCOL.md §5.1.
-
-## Tests
-
-```bash
-python -m pytest                    # everything (about 12 minutes)
-python -m pytest -m "not slow"      # fast subset
-python -m pytest -m realdata        # Level B; skipped unless data/mafaulda exists
-```
-
-All tests except Level B run on seeded synthetic data and must pass before any
-real-data run.
-
-| Level | File | What it checks |
-|---|---|---|
-| A | `tests/test_features.py` | Feature values against analytic signals; no duplicate features |
-| B | `tests/test_data.py` | Real data: file count, shapes, labels, speed range |
-| C | `tests/test_leakage.py` | No shared recordings or speed bands; guards fire |
-| D | `tests/test_pipeline.py`, `tests/test_experiments.py` | Determinism, resume, completeness, lookup-equals-refit |
-| E | `tests/test_sanity.py` | Shuffled labels at chance, dummy baseline, ranking, confusion totals |
-| F | `tests/test_analysis.py` | Row counts, metric ranges, provenance; Level F lives inside `04_analyze.py` |
-
-## Output to paper mapping
-
-| Output | Paper element |
+| | |
 |---|---|
-| Figure 1 and main table | RQ1, H1, H2 |
-| Figure 2 and main table | RQ3, H3 |
-| Figures 3–5 | Fault sensitivity |
-| Figures 6 and 6b | Redundancy discussion |
+| Python | 3.14.2 |
+| numpy / pandas / scipy | 2.5.3 / 3.0.6 / 1.18.1 |
+| scikit-learn / matplotlib / joblib | 1.9.1 / 3.11.2 / 1.6.0 |
+| Hardware | AMD64 16-core, Windows 11 |
+| Feature extraction | 2 min 37 s, 1,951 recordings |
+| Experiment, 7 sensors | 21-26 min per split mode (10 splits x 127 subsets) |
+| Experiment, 8 sensors | 56 min (10 splits x 255 subsets) |
+| Peak memory | 273 MiB |
+| Test suite | 135 tests, about 7 minutes |
 
-| File | Contains |
-|---|---|
-| `tables/table_main.csv` / `.tex` | Macro-F1 against *k* for every strategy; `.tex` drops straight into the paper |
-| `tables/hypotheses.txt` | H1, H2 and H3 verdicts, with every threshold stated inline |
-| `tables/table_per_class.csv` | Per-class recall against *k* |
-| `tables/table_detection_errors.csv` | Missed detection, false alarm, misdiagnosis |
-| `tables/sensor_importance_per_split.csv` | Grouped permutation importance, one row per split |
-| `tables/sensor_rms_correlation.csv` | Spearman ρ of RMS between sensors |
-| `tables/sensor_mean_abs_correlation.csv` | Mean \|ρ\| over all 18 features |
-| `figures/captions.tex` | Generated figure captions, `\input` by the paper |
-| `*/run_metadata.json` | Commit, versions, timestamp and inputs for every step |
-| [`docs/RESULTS_INVENTORY.md`](docs/RESULTS_INVENTORY.md) | Every table and figure, what it shows, and which paper section it feeds |
+Exact versions are pinned in `requirements-lock.txt`. `requirements.txt` holds
+the minimum constraints.
 
-## Reading the results honestly
+## Dataset licence
 
-- **The oracle column and the oracle *k* are an upper bound**, selected using
-  test scores. They are not achievable in practice and are never the answer. The
-  permutation-selected and forward-selected results are.
-- **H1 is judged on the fair curves.** The oracle curve is a maximum over
-  C(7,*k*) candidates, so its upward bias grows with the number of candidates and
-  peaks at the middle *k*. See PROTOCOL.md §7.
-- **A sensor with low permutation importance is not necessarily useless.**
-  Permutation importance measures marginal contribution, so a redundant sensor
-  scores near zero. Read it alongside the forward-selection order and the
-  correlation matrices. See PROTOCOL.md §8.2.
-- **The 10 split scores are not mutually independent**, because the two repeats
-  reuse the same recordings. Treat the p-values as supporting evidence alongside
-  the effect sizes and percentile ranks.
+**MaFaulDa is not redistributed here.** It belongs to the Signals, Multimedia and
+Telecommunications Laboratory, COPPE/Poli, Universidade Federal do Rio de
+Janeiro, and must be obtained from
+[their page](https://www02.smt.ufrj.br/~offshore/mfs/page_01.html) under
+whatever terms they set. Nothing under `data/` or `features/` is tracked in this
+repository.
 
-## Repository layout
+## Licence
 
-```
-common.py                  all constants and shared helpers (single source of truth)
-01_extract_features.py     raw CSV -> features/features.csv
-02_checkpoint.py           go/no-go checks before the expensive run
-03_run_experiments.py      selection + all 127 subsets on every split
-04_analyze.py              tables, figures, hypothesis verdicts, Level F checks
-tests/                     Levels A-F
-paper/                     IEEEtran skeleton and bibliography
-PROTOCOL.md                every fixed decision, with reasons
-docs/RESULTS_INVENTORY.md  map of every generated table and figure
-```
+The code in this repository is released under the MIT Licence. See
+[LICENSE](LICENSE).
+
+## Citation
+
+If you use this code, please cite the paper. Details are in
+[CITATION.cff](CITATION.cff); the dataset should be cited separately, as in
+`paper/refs.bib`.

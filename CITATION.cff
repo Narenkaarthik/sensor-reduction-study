@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+title: >-
+  How Many Sensors Are Enough? An Exhaustive Sensor-Subset Analysis for
+  Rotating Machinery Fault Diagnosis
+message: >-
+  If you use this software or the results in this repository, please cite it
+  using the metadata below. The MaFaulDa dataset must be cited separately; see
+  paper/refs.bib.
+type: software
+
+authors:
+  - given-names: Naren
+    family-names: Kaarthik
+
+repository-code: https://github.com/Narenkaarthik/sensor-reduction-study
+license: MIT
+
+keywords:
+  - fault diagnosis
+  - rotating machinery
+  - sensor selection
+  - feature importance
+  - machine learning
+  - MaFaulDa
