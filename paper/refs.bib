@@ -1,11 +1,16 @@
 % Bibliography for "How Many Sensors Are Enough?"
 %
 % RULE FOR THIS FILE: nothing goes in uncommented unless it has been verified
-% against the source. Entries below are marked with what was checked and what
-% was not. Do not uncomment an example entry and fill it from memory.
+% against the source. Every entry below records what was checked and how.
+% Do not uncomment an example entry and fill it from memory.
+%
+% STATUS 2026-10-31: all nine Section II citation slots are resolved. Eight
+% were filled with verified references; the ninth was DELETED rather than
+% filled, because no source was found for the claim it supported. See the
+% note under BIN 3.
 
 % ===========================================================================
-% THE DATASET  (cite this; it is the only entry that is not a placeholder)
+% THE DATASET
 % ===========================================================================
 %
 % VERIFIED on 2026-09-24 against
@@ -17,6 +22,10 @@
 %     categories, which matches EXPECTED_RECORDINGS in the code.
 %   - The page spells the dataset "MAFAULDA".
 %
+% Corroborated 2026-10-31 by \cite{marins2018} (same laboratory), which
+% states "a total of 1951 different scenarios, each one described by 8
+% signals acquired at 50 kHz over a time interval of 5 s".
+%
 % CONSTRUCTED, NOT QUOTED: the page requests no particular citation format, so
 % this entry is written in the IEEE online-resource form rather than copied
 % from the source.
@@ -27,7 +36,10 @@
 % omitted. The IEEE online-resource form does not require it; the accessed
 % date carries the temporal information instead.
 %
-% TODO: set the accessed date to the day the data was actually downloaded.
+% ACCESSED DATE: set from the on-disk timestamps of data/mafaulda/, whose
+% files all carry 2026-09-25. That is when the data landed on this machine.
+% CONFIRM THIS against your own record of the download before submitting --
+% a file timestamp can survive an archive extraction.
 % No DOI is stated on the page.
 %
 @misc{mafaulda,
@@ -37,108 +49,233 @@
                   {COPPE/Poli}, Universidade Federal do Rio de Janeiro.
                   [Online]. Available:
                   \url{https://www02.smt.ufrj.br/~offshore/mfs/page_01.html}},
-  note         = {[Accessed: TODO --- set to the real download date]}
+  note         = {[Accessed: 25-Sep-2026]}
 }
 
 % ===========================================================================
-% RELATED WORK: FILING SLOTS
-% ===========================================================================
-%
-% Source note: these themes are NOT enumerated in PROJECT_SPEC.md, which lists
-% only the section names. They are filing bins for reading, and they do NOT
-% map one-to-one onto the paper's subsections: five subsections in the space
-% available would be one paragraph each.
-%
-% BIN -> SUBSECTION MAPPING (keep in step with main.tex Section II):
-%
-%   Bins 1 + 2  ->  II-A  Fault diagnosis on rotating machinery
-%   Bin  3      ->  II-B  Sensor and feature selection and reduction
-%   Bins 4 + 5  ->  II-C  Evaluation methodology in machinery datasets
-%                          then a closing paragraph stating the gap
-%
-% II-C is not filler: it is where this paper's leakage handling and the
-% permutation-importance limitation are positioned against prior work.
-%
-% File papers under the matching bin as you read them. Add the real BibTeX
-% from the publisher or the DOI; do not type entries from memory, and do not
-% add a paper you have not read enough of to cite honestly.
-%
-% ---------------------------------------------------------------------------
 % BIN 1 -> II-A: Vibration-based fault diagnosis on rotating machinery
-%   General background. What is normally measured, which features are
-%   conventional, and what performance is typically reported.
-%   Also cited from: the Introduction motivation.
-% ---------------------------------------------------------------------------
-% (file entries here)
+% ===========================================================================
+%
+% VERIFIED 2026-10-31. Journal, volume, article number, year and DOI agree
+% across the British Library catalogue record, the Brunel University
+% repository record (bura.brunel.ac.uk/handle/2438/20040) and a BibBase
+% record. NOTE the author list: Lei, Yang, Jiang, Jia, Li, Nandi -- several
+% secondary sources give a different list, and this one is the repository's.
+% An article number, not a page range, is correct for this journal.
+%
+% Supports (II-A): that a large body of work proposes new features and
+% classifiers evaluated with the full sensor complement, and the general
+% background claim in the Introduction.
+%
+@article{lei2020,
+  author  = {Lei, Yaguo and Yang, Bin and Jiang, Xinwei and Jia, Feng and
+             Li, Naipeng and Nandi, Asoke K.},
+  title   = {Applications of machine learning to machine fault diagnosis:
+             A review and roadmap},
+  journal = {Mechanical Systems and Signal Processing},
+  volume  = {138},
+  pages   = {106587},
+  year    = {2020},
+  doi     = {10.1016/j.ymssp.2019.106587}
+}
 
-% ---------------------------------------------------------------------------
+% VERIFIED 2026-10-31 against the DBLP record
+% dblp.uni-trier.de/rec/journals/tie/RauberBV15.html, which gives the
+% journal, volume 62, issue 1, pages 637-646, January 2015 and the DOI.
+%
+% Supports (II-A): that conventional feature sets combine time- and
+% frequency-domain statistical parameters. The paper's feature models draw on
+% the complex envelope spectrum, statistical time- and frequency-domain
+% parameters and wavelet packet analysis.
+% Also supports (II-B): greedy search over the feature space as the selection
+% step. CAUTION when citing: this paper evaluates on CWRU, not MaFaulDa.
+%
+@article{rauber2015,
+  author  = {Rauber, Thomas W. and Boldt, Francisco de Assis and
+             Varej{\~a}o, Fl{\'a}vio Miguel},
+  title   = {Heterogeneous Feature Models and Feature Selection Applied to
+             Bearing Fault Diagnosis},
+  journal = {IEEE Transactions on Industrial Electronics},
+  volume  = {62},
+  number  = {1},
+  pages   = {637--646},
+  year    = {2015},
+  doi     = {10.1109/TIE.2014.2327589}
+}
+
+% ===========================================================================
 % BIN 2 -> II-A: The MaFaulDa dataset and published results on it
-%   Prior work using this specific dataset. Needed to position our numbers,
-%   and specifically to state what accuracy has been reported before AND under
-%   which validation scheme. Record for each paper whether it states how
-%   windows or segments were split, since window-level splitting inflates
-%   scores and makes a reported number incomparable with ours.
-%   Also cited from: Section III Dataset, and the Discussion comparison.
-% ---------------------------------------------------------------------------
-% (file entries here)
+% ===========================================================================
+%
+% VERIFIED 2026-10-31 by reading the PDF itself
+% (https://www.smt.ufrj.br/~sergioln/papers/IJ28.pdf, which redirects to
+% www02.smt.ufrj.br). Author list, journal, volume, year, page range and DOI
+% are all taken from the article's own first page, not from an aggregator.
+%
+% WHAT IT ACTUALLY DID, read from Section 5 of the paper, because the paper's
+% evaluation protocol is the reason we cite it:
+%   - "The whole MaFaulDa database was randomly separated in two disjoint
+%     training and test sets, comprising respectively 90% and 10% of the
+%     given scenarios. The random choice of each set was constrained so that
+%     both presented the same fault proportion as the whole database."
+%   - Parameters were then chosen by 10-fold cross-validation on the training
+%     samples.
+%   - A "scenario" is one whole 5 s recording. MaFaulDa recordings are NOT
+%     segmented into windows in that paper; only the CWRU signals are ("each
+%     CWRU signal was divided into 15 segments").
+%   - Reported accuracy: 98.5% on MaFaulDa, 98.9% on CWRU.
+%
+% CONSEQUENCE FOR OUR COMPARISON, and the reason II-A is worded as it is:
+% their split is at RECORDING level, so it is NOT window-level leakage. It
+% corresponds to our SECONDARY (held-out recordings) protocol, not to our
+% primary held-out speed bands, because speeds are shared between their train
+% and test sets. Do not describe this paper as leaky; say which of our two
+% protocols it lines up with.
+%
+@article{marins2018,
+  author  = {Marins, Matheus A. and Ribeiro, Felipe M. L. and
+             Netto, Sergio L. and da Silva, Eduardo A. B.},
+  title   = {Improved similarity-based modeling for the classification of
+             rotating-machine failures},
+  journal = {Journal of the Franklin Institute},
+  volume  = {355},
+  number  = {4},
+  pages   = {1913--1930},
+  year    = {2018},
+  doi     = {10.1016/j.jfranklin.2017.07.038}
+}
 
-% ---------------------------------------------------------------------------
+% ===========================================================================
 % BIN 3 -> II-B: Sensor and feature selection and reduction
-%   Wrapper, filter and embedded selection. Greedy forward selection in
-%   particular, and any prior work that evaluates subsets exhaustively rather
-%   than heuristically.
-%   Also cited from: the Methodology justification for forward selection.
-% ---------------------------------------------------------------------------
-% (file entries here)
+% ===========================================================================
+%
+% VERIFIED 2026-10-31 against the JMLR listing jmlr.org/papers/v3/guyon03a.html
+% and the DBLP record dblp.org/rec/journals/jmlr/GuyonE03.html, which agree on
+% volume 3, pages 1157-1182, 2003. JMLR articles of this vintage carry no DOI,
+% so the field is omitted rather than invented.
+%
+% Supports (II-B): the filter / wrapper / embedded taxonomy.
+%
+@article{guyon2003,
+  author  = {Guyon, Isabelle and Elisseeff, Andr{\'e}},
+  title   = {An Introduction to Variable and Feature Selection},
+  journal = {Journal of Machine Learning Research},
+  volume  = {3},
+  pages   = {1157--1182},
+  year    = {2003}
+}
 
-% ---------------------------------------------------------------------------
+% SLOT DELETED, NOT FILLED. The draft previously claimed that "exhaustive
+% evaluation is rarely reported, presumably because it is intractable for
+% large sensor counts", with a placeholder key todo_bin3_exhaustive.
+%
+% No source was found that establishes how often exhaustive subset evaluation
+% is reported in this literature, and the claim is an assertion about the
+% state of the literature that our own results cannot settle. Rather than
+% attach a loose citation, the sentence in II-B was rewritten to state only
+% the combinatorial fact -- that the number of subsets grows as 2^n - 1, so
+% enumeration stops being tractable quickly -- which needs no source.
+%
+% If a survey is later found that does count this, restore the stronger claim
+% and file the reference here.
+
+% ===========================================================================
 % BIN 4 -> II-C: Permutation importance and its limitations
-%   The original formulation, and work on its behaviour under CORRELATED or
-%   REDUNDANT features. This bin carries the limitation documented in
-%   PROTOCOL.md section 8.2: permutation importance measures MARGINAL
-%   contribution, so a near-zero score cannot by itself distinguish a sensor
-%   that carries no information from one that is merely redundant.
-%   Also cited from: the Discussion of Fig. 2.
-% ---------------------------------------------------------------------------
-% (file entries here)
+% ===========================================================================
+%
+% VERIFIED 2026-10-31. Volume 45, issue 1, pages 5-32, 2001 and the DOI agree
+% across the Wikipedia citation, a BibBase record and a Springer-derived
+% listing. This is the original formulation of the permutation importance
+% measure we use.
+%
+@article{breiman2001,
+  author  = {Breiman, Leo},
+  title   = {Random Forests},
+  journal = {Machine Learning},
+  volume  = {45},
+  number  = {1},
+  pages   = {5--32},
+  year    = {2001},
+  doi     = {10.1023/A:1010933404324}
+}
 
-% ---------------------------------------------------------------------------
+% VERIFIED 2026-10-31 against the PubMed Central record PMC2491635
+% (PMID 18620558), which gives BMC Bioinformatics 2008 Jul 11;9:307 and the
+% DOI. The DOAJ record transposes given and family names; the PMC listing was
+% used instead.
+%
+% Supports (II-C) and the Discussion of Fig. 2: that permutation importance
+% is biased in the presence of correlated predictors, and that the marginal
+% measure does not separate "carries no information" from "redundant". The
+% paper's own words: these measures "show a bias towards correlated predictor
+% variables", and it proposes a conditional scheme as the remedy.
+%
+% NOTE: we do NOT implement their conditional permutation scheme. We cite
+% them for the limitation, and we respond to it with forward selection,
+% single-sensor scores and the correlation matrices instead. Do not let the
+% citation imply we adopted their method.
+%
+@article{strobl2008,
+  author  = {Strobl, Carolin and Boulesteix, Anne-Laure and Kneib, Thomas and
+             Augustin, Thomas and Zeileis, Achim},
+  title   = {Conditional variable importance for random forests},
+  journal = {BMC Bioinformatics},
+  volume  = {9},
+  pages   = {307},
+  year    = {2008},
+  doi     = {10.1186/1471-2105-9-307}
+}
+
+% ===========================================================================
 % BIN 5 -> II-C: Data leakage in machinery datasets
-%   Window-level and segment-level leakage, grouped cross-validation, and
-%   reported cases of inflated results from splitting correlated segments at
-%   random. Supports the leakage check in 02_checkpoint.py.
-%   Also cited from: the Methodology leakage-control subsection.
-% ---------------------------------------------------------------------------
-% (file entries here)
-
 % ===========================================================================
-% FORMAT EXAMPLES  (commented; these are templates, not real references)
-% ===========================================================================
+%
+% VERIFIED 2026-10-31. The British Library catalogue record gives Mechanical
+% Systems and Signal Processing volume 169, 15 April 2022, authors Jacob
+% Hendriks, Patrick Dumond and D. A. Knox; citing papers give article 108732,
+% which matches the DOI. NOTE the spelling "Dumond", not "Dumont".
+%
+% Supports (II-C): that splitting correlated segments at random inflates
+% reported results in machinery datasets, and that building train and test
+% sets from independent hardware is the remedy. The paper proposes a
+% benchmarking framework that builds training and testing sets from
+% independent sets of bearings, and later work cites it for exactly the data
+% leakage point.
+%
+% CAUTION when citing: this paper is about CWRU, not MaFaulDa, and about
+% independent BEARINGS rather than our grouping by recording or speed band.
+% Cite it for the phenomenon and the principle, not as a protocol we copied.
+%
+@article{hendriks2022,
+  author  = {Hendriks, Jacob and Dumond, Patrick and Knox, D. A.},
+  title   = {Towards better benchmarking using the {CWRU} bearing fault
+             dataset},
+  journal = {Mechanical Systems and Signal Processing},
+  volume  = {169},
+  pages   = {108732},
+  year    = {2022},
+  doi     = {10.1016/j.ymssp.2021.108732}
+}
 
-% @article{example_journal,
-%   author  = {Lastname, Firstname and Other, Author},
-%   title   = {Title of the paper},
-%   journal = {IEEE Transactions on Industrial Electronics},
-%   volume  = {00},
-%   number  = {0},
-%   pages   = {1--10},
-%   year    = {2024},
-%   doi     = {10.1109/TIE.0000.0000000}
-% }
-
-% @inproceedings{example_conference,
-%   author    = {Lastname, Firstname},
-%   title     = {Title of the paper},
-%   booktitle = {Proc. IEEE Int. Conf. on Something},
-%   pages     = {1--6},
-%   year      = {2024},
-%   doi       = {10.1109/CONF.0000.0000000}
-% }
-
-% @book{example_book,
-%   author    = {Lastname, Firstname},
-%   title     = {Title of the Book},
-%   publisher = {Publisher},
-%   edition   = {2nd},
-%   year      = {2020}
-% }
+% VERIFIED 2026-10-31 against the DBLP record
+% dblp.org/rec/conf/kdd/KaufmanRP11.html and a BibTeX listing, which agree on
+% KDD 2011, pages 556-563 and the DOI.
+%
+% THE CONFERENCE VERSION IS CITED DELIBERATELY. There is also a journal
+% version (ACM TKDD 6(4), Article 15, 2012, which adds Ori Stitelman as a
+% fourth author), but no DOI for it could be confirmed, so the version whose
+% identifiers were verified is the one cited. If you prefer the journal
+% version, look up its DOI in the ACM Digital Library first.
+%
+% Supports (II-C): leakage as a named failure mode and the "learn-predict
+% separation" principle behind keeping all segments of a recording together.
+%
+@inproceedings{kaufman2011,
+  author    = {Kaufman, Shachar and Rosset, Saharon and Perlich, Claudia},
+  title     = {Leakage in data mining: formulation, detection, and avoidance},
+  booktitle = {Proc. 17th ACM SIGKDD Int. Conf. on Knowledge Discovery and
+               Data Mining (KDD '11)},
+  pages     = {556--563},
+  year      = {2011},
+  doi       = {10.1145/2020408.2020496}
+}
