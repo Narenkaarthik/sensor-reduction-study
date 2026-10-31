@@ -8,6 +8,8 @@ that nothing was written.
 from __future__ import annotations
 
 import json
+import re
+from math import comb
 from pathlib import Path
 from types import ModuleType
 
@@ -371,7 +373,7 @@ def test_main_table_reports_the_candidate_count(analyzer, analysed) -> None:
     assert list(table[analyzer.candidates_column()]) == [7, 21, 35, 35, 21, 7, 1]
 
     tex = (root / "tables" / "recording" / "table_main.tex").read_text()
-    assert r"\binom{7}{k}" in tex
+    assert rf"\binom{{{len(SENSORS)}}}{{k}}" in tex
 
 
 def test_h1_primary_verdict_uses_the_fair_curves(analysed) -> None:
@@ -610,3 +612,59 @@ def test_hypotheses_file_labels_holm_as_post_hoc(analysed) -> None:
     assert "NOT the pre-registered test" in text
     assert "Holm-adjusted" in text
     assert text.index("VERDICT") < text.index("SUPPLEMENTARY, POST HOC")
+
+
+def test_latex_table_body_matches_its_header_width(analysed) -> None:
+    """Every body row carries as many cells as the header declares.
+
+    A row short of one cell still compiles, so LaTeX would silently shift
+    every number one column left and print the whole main table under the
+    wrong headings. Only a column-count check catches that.
+    """
+    root, _, _, _, _ = analysed
+    tex = (root / "tables" / "recording" / "table_main.tex").read_text()
+
+    spec = re.search(r"\\begin\{tabular\}\{([^}]*)\}", tex).group(1)
+    declared = sum(c in "lcr" for c in spec)
+
+    body = tex.split(r"\midrule")[1].split(r"\bottomrule")[0]
+    rows = [r for r in body.split(r"\\") if r.strip()]
+    assert len(rows) == len(SENSORS), f"{len(rows)} body rows"
+    for row in rows:
+        assert len(row.split("&")) == declared, (declared, row)
+
+    header = tex.split(r"\toprule")[1].split(r"\midrule")[0]
+    assert len(header.replace(r"\\", "").split("&")) == declared, header
+
+
+def test_latex_table_body_reports_the_candidate_counts(analysed) -> None:
+    """The C(n,k) column the caption explains is actually in the rows."""
+    root, _, _, _, _ = analysed
+    tex = (root / "tables" / "recording" / "table_main.tex").read_text()
+    body = tex.split(r"\midrule")[1].split(r"\bottomrule")[0]
+    rows = [r for r in body.split(r"\\") if r.strip()]
+    second = [int(r.split("&")[1].strip()) for r in rows]
+    assert second == [comb(len(SENSORS), k) for k in range(1, len(SENSORS) + 1)]
+
+
+def test_generated_output_never_hardcodes_the_sensor_count(analysed) -> None:
+    """No generated file may name a sensor count other than the real one.
+
+    The candidates header was hard-coded once already and mislabelled the
+    8-sensor table; the same bug then survived in the LaTeX table and in the
+    Fig. 5 caption. This asserts the property for every generated file at
+    once, so a future copy of it cannot pass.
+    """
+    root, _, _, _, _ = analysed
+    n = len(SENSORS)
+    wrong = [m for m in range(1, 13) if m != n]
+    for name in ("table_main.tex", "hypotheses.txt"):
+        text = (root / "tables" / "recording" / name).read_text()
+        for m in wrong:
+            assert rf"\binom{{{m}}}{{k}}" not in text, (name, m)
+            assert f"C({m},k)" not in text, (name, m)
+            assert f"full {m}-sensor" not in text, (name, m)
+    captions = (root / "figures" / "recording" / "captions.tex").read_text()
+    for m in wrong:
+        assert f"{m}-sensor" not in captions, m
+    assert f"{n}-sensor" in captions

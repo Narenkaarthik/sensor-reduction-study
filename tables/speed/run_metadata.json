@@ -1,7 +1,18 @@
 {
   "script": "04_analyze.py",
-  "utc_timestamp": "2026-10-01T12:05:24+00:00",
-  "git_commit": "1f82015dc875b6a27a9315e9b1aedb1d3abc26f6",
+  "git_dirty_scope": [
+    "common.py",
+    "01_extract_features.py",
+    "02_checkpoint.py",
+    "03_run_experiments.py",
+    "04_analyze.py",
+    "tests",
+    "scripts",
+    "requirements.txt",
+    "requirements-lock.txt"
+  ],
+  "utc_timestamp": "2026-10-31T07:18:58+00:00",
+  "git_commit": "3e04081a111cc071901f843945c93d544ec88864",
   "git_dirty": true,
   "python_version": "3.14.2",
   "python_executable": "C:\\Users\\snare\\sensor-reduction\\.venv\\Scripts\\python.exe",
