@@ -148,7 +148,19 @@ exclusion is at the sensor-set level, not at extraction.
 
 The tachometer does **not** separate `ball_fault` in general — every B-vs-C
 effect is |*d*| ≤ 0.43. The effect lives entirely in the 67 affected
-recordings. `scripts/diagnose_speed.py` reproduces these numbers.
+recordings. `scripts/tach_effect_sizes.py` reproduces these numbers and writes
+all 18 tachometer features to
+`tables/secondary_8sensor_speed/supp_tach_effect_sizes.csv`.
+
+**Corrected 2026-10-31.** This paragraph previously pointed at
+`scripts/diagnose_speed.py`, which diagnoses the threshold failure but has
+never computed an effect size, so the table above had no reproduction path in
+the repository. `scripts/tach_effect_sizes.py` was written to close that gap;
+rerunning it returns every value in the table above to three decimal places,
+with window counts 335 / 1,280 / 8,140 as stated. The five rows listed here are
+a selection, not the five largest: sorted by |*d*(A vs C)| the fourth and fifth
+are `band_5000_10000` (5.328) and `band_2000_5000` (4.868). The full table is
+in the CSV.
 
 **What this costs.** The full configuration is now 7 sensors rather than 8, and
 the exhaustive sweep is 127 subsets per split rather than 255, so 10 × 127 =
@@ -388,6 +400,19 @@ of estimate to true speed clusters on small integers — 2×:23, 3×:17, 4×:11,
 
 `scripts/diagnose_speed.py` reproduces every number above and is kept in the
 repository as the evidence for this limitation.
+
+**Repaired 2026-10-31.** From the `speed_hz` change in section 3.1 until this
+date the script was silently broken: it aggregated `est=("speed_hz", "first")`,
+and because section 3.1 had moved the tachometer estimate to `speed_hz_tach`
+and made `speed_hz` the file-name value, the script was comparing the file name
+with itself. It reported a Pearson *r* of 1.0000, an estimator range of
+12.1–62.3 Hz, and an **empty** affected group, while still printing the
+hard-coded heading `AFFECTED 67`. One word was wrong; no result was affected,
+because no model ever consumed `speed_hz` and the exclusion in section 2.2
+rests on `speed_hz_tach`, which was always correct. With the column corrected
+the script again reports 11.6–320.6 Hz, 67 affected recordings, a median
+estimate/name ratio of 0.977 and a median difference of −0.79 Hz on the
+remaining 1,884, matching every number recorded in sections 2.2 and 3.1.
 
 **This is a property of the dataset's tachometer channel on those files.** It is
 reported as a limitation rather than corrected, and the estimator is left

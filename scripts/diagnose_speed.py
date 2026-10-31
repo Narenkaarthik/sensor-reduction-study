@@ -88,8 +88,13 @@ def describe(path: Path, group: str) -> dict[str, object]:
 def main() -> None:
     """Run the whole diagnosis and print it."""
     features = pd.read_csv("features/features.csv")
+    # speed_hz_tach, NOT speed_hz: PROTOCOL 3.1 moved the tachometer
+    # estimate to its own column and speed_hz now comes from the file
+    # name. Reading speed_hz here compares the file name with itself,
+    # which makes every recording look in-range and empties the
+    # affected group.
     per_rec = features.groupby("recording_id").agg(
-        label=("label", "first"), est=("speed_hz", "first"))
+        label=("label", "first"), est=("speed_hz_tach", "first"))
     files = sorted(DATA_DIR.rglob("*.csv"))
     per_rec["path"] = [str(f) for f in files]
     per_rec["name_hz"] = [

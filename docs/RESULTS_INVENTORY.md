@@ -100,6 +100,7 @@ unchanged, so no recorded number is affected.
 | `supp_confusion_tach.csv` | Confusion matrix, tachometer alone. | Artefact subsection |
 | `supp_confusion_ob_rad.csv` | Confusion matrix, control sensor alone. | Artefact subsection |
 | `supp_artifact_exploitation.csv` | **The decisive test.** Accuracy on affected vs unaffected bearing-class windows, for tach alone, the control, and the full 8- and 7-sensor models, with window counts. | **Artefact subsection — the central evidence** (PROTOCOL.md §2.5) |
+| `supp_tach_effect_sizes.csv` | Cohen's *d* for all 18 tachometer features across the three group comparisons behind the exclusion: affected vs non-ball-fault, other ball-fault vs non-ball-fault, affected vs other ball-fault, with window counts. | Artefact subsection; the evidence for PROTOCOL.md §2.2 |
 
 ---
 
