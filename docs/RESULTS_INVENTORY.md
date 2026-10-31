@@ -78,6 +78,11 @@ pairs are kept so the choice can be made on the real figures.
 | `sensor_mean_abs_correlation.csv` | Mean \|ρ\| over 18 features. | Redundancy; source for fig6b |
 | `run_metadata.json` | Commit, dirty flag and its scope, library versions, seed, command line, inputs consumed. | Reproducibility statement |
 
+The commit each `run_metadata.json` names is the one that existed when that run
+happened, before the 2026-10-31 identity rewrite, so it does not resolve in the
+published history. [COMMIT_MAP.md](COMMIT_MAP.md) translates it. The trees are
+unchanged, so no recorded number is affected.
+
 ### Supplementary, in `speed` and `recording`
 
 | File | Contains | Feeds |

@@ -158,6 +158,10 @@ by array rather than byte by byte.
   why each was made on physical rather than empirical grounds.
 - [docs/RESULTS_INVENTORY.md](docs/RESULTS_INVENTORY.md) — every generated table
   and figure, what it shows, and which paper section it feeds.
+- [docs/COMMIT_MAP.md](docs/COMMIT_MAP.md) — the commit hashes recorded in
+  `PROTOCOL.md` and in every `run_metadata.json` predate a 2026-10-31 identity
+  rewrite and do not resolve in this history. This maps each one to its
+  published counterpart; no tree, message or date changed.
 
 ## Environment
 

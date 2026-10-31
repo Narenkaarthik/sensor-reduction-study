@@ -20,6 +20,19 @@ byte-identical to the pre-squash tree. The earlier two-tag scheme
 colour scale, the `--dry-run` probe and the run script) no longer exists in the
 history; that distinction is recorded here instead.
 
+**Commit hashes changed on 2026-10-31.** Before the repository was made public,
+the author, committer and tagger e-mail addresses were replaced with the
+author's GitHub `users.noreply.github.com` address. Changing an identity changes
+the commit hash, so every commit hash in the published history differs from the
+one recorded in this document and in the `run_metadata.json` files. **No tree,
+commit message, author date or committer date changed**, and no code, constant,
+threshold or result differs as a result. The hashes recorded here were left
+untouched — §12.1(a) quotes real log output, and the metadata files are written
+by the pipeline, never by hand — so
+[docs/COMMIT_MAP.md](docs/COMMIT_MAP.md) maps every pre-rewrite hash to its
+published counterpart. Both protocol tags were recreated on the rewritten
+commits with byte-identical messages and unchanged dates.
+
 ---
 
 ## 1. Research questions and hypotheses
@@ -708,6 +721,13 @@ working tree.
 
 Every number in the paper comes from a file under `results/` or `tables/`, and
 every one of those files can be traced to the commit that produced it.
+
+The commit hashes recorded in those metadata files, and quoted throughout §12.1
+below, are the ones that existed when each run happened. They predate the
+2026-10-31 identity rewrite described at the top of this document and do not
+resolve in the published history. [docs/COMMIT_MAP.md](docs/COMMIT_MAP.md)
+translates each one; the trees they name are unchanged, so every provenance
+reference below remains checkable.
 
 ---
 
