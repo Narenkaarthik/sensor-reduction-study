@@ -11,11 +11,11 @@
     "requirements.txt",
     "requirements-lock.txt"
   ],
-  "utc_timestamp": "2026-10-31T07:19:07+00:00",
-  "git_commit": "3e04081a111cc071901f843945c93d544ec88864",
-  "git_dirty": true,
+  "utc_timestamp": "2026-11-02T16:50:25+00:00",
+  "git_commit": "af4d1ad24fa4d8afa645dafb57062f1c2ade1483",
+  "git_dirty": false,
   "python_version": "3.14.2",
-  "python_executable": "C:\\Users\\snare\\sensor-reduction\\.venv\\Scripts\\python.exe",
+  "python_executable": ".venv/Scripts/python.exe",
   "package_versions": {
     "numpy": "2.5.3",
     "pandas": "3.0.6",
@@ -27,7 +27,7 @@
   "seed": 42,
   "command_line": "04_analyze.py --split recording --expect-full-run",
   "split_mode": "recording",
-  "results_dir": "C:\\Users\\snare\\sensor-reduction\\results\\recording",
+  "results_dir": "results/recording",
   "n_splits": 10,
   "n_score_rows": 1270,
   "expect_full_run": true,
@@ -39,7 +39,7 @@
       "git_commit": "af5b0605e7aa164e1f78237a0aa44333d0866bb4",
       "git_dirty": false,
       "python_version": "3.14.2",
-      "python_executable": "C:\\Users\\snare\\sensor-reduction\\.venv\\Scripts\\python.exe",
+      "python_executable": ".venv/Scripts/python.exe",
       "package_versions": {
         "numpy": "2.5.3",
         "pandas": "3.0.6",
@@ -50,7 +50,7 @@
       },
       "seed": 42,
       "command_line": "01_extract_features.py --jobs -1",
-      "data_dir": "C:\\Users\\snare\\sensor-reduction\\data\\mafaulda",
+      "data_dir": "data/mafaulda",
       "n_csv_files_found": 1951,
       "n_recordings_processed": 1951,
       "n_rows": 9755,
@@ -60,11 +60,22 @@
     },
     "results": {
       "script": "03_run_experiments.py",
-      "utc_timestamp": "2026-10-01T10:17:36+00:00",
-      "git_commit": "1f82015dc875b6a27a9315e9b1aedb1d3abc26f6",
+      "git_dirty_scope": [
+        "common.py",
+        "01_extract_features.py",
+        "02_checkpoint.py",
+        "03_run_experiments.py",
+        "04_analyze.py",
+        "tests",
+        "scripts",
+        "requirements.txt",
+        "requirements-lock.txt"
+      ],
+      "utc_timestamp": "2026-11-02T16:49:38+00:00",
+      "git_commit": "af4d1ad24fa4d8afa645dafb57062f1c2ade1483",
       "git_dirty": false,
       "python_version": "3.14.2",
-      "python_executable": "C:\\Users\\snare\\sensor-reduction\\.venv\\Scripts\\python.exe",
+      "python_executable": ".venv/Scripts/python.exe",
       "package_versions": {
         "numpy": "2.5.3",
         "pandas": "3.0.6",
@@ -79,21 +90,10 @@
       "n_trees": 200,
       "quick": false,
       "n_splits_total": 10,
-      "n_splits_run_this_session": 10,
+      "n_splits_run_this_session": 0,
       "n_subsets": 127,
       "n_rows": 9755,
-      "seconds_per_split": [
-        117.6,
-        115.3,
-        117.8,
-        127.5,
-        125.1,
-        119.0,
-        119.0,
-        120.4,
-        148.6,
-        162.0
-      ]
+      "seconds_per_split": []
     }
   }
 }
