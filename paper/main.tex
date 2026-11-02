@@ -16,21 +16,22 @@
 % have not copied from one of those. If a number here disagrees with the
 % generated file, the generated file is right and this one is stale.
 %
-% LENGTH. Targeted at the standard 6-page limit: 3 single-column figures, 2
-% tables, about 4,400 words. Modelling IEEEtran column geometry -- 10pt body
-% at ~1,040 words per page, 8pt captions, float heights including the long
-% generated captions -- estimates 5.6 pages, so there is roughly a third of a
-% page of slack for float placement.
+% LENGTH: EXACTLY 6 PAGES, verified by compiling with MiKTeX on 2026-11-02.
+% pdflatex reports "Output written on main.pdf (6 pages)" with zero Overfull
+% boxes and no undefined references. Page 6 is full and ends with the last
+% reference, so there is NO slack: any addition pushes to a seventh page.
 %
-% THIS HAS NEVER BEEN COMPILED: no TeX installation was available where it was
-% written, so that figure is an estimate and nothing more. Build it first.
-% If it runs over by a little, cut in this order, each marked TRIM below:
-%   1. Section II-C's second paragraph (permutation importance background)
-%   2. The secondary-protocol paragraph in Section V-E
-%   3. The methodological-point paragraph in Section V-F
-% If it runs UNDER 6 pages, the per-class recall figure and the confusion
-% matrices are in ../figures/speed/ and were cut only for space; fig3 is the
-% better of the two to restore.
+% Getting here cost two figures. Cut for space only, all still in
+% ../figures/speed/ and restorable in one block each:
+%   fig4_detection_errors  (caption \FigFourCaption) -- every number it plots
+%                          is stated in the text of Section IV-D
+%   fig3_per_class_recall, fig5b_confusion_k1, fig6_sensor_correlation
+% fig7_sensor_profile replaced the old fig2 and fig6b: it carries marginal
+% importance, standalone score and correlation in one panel.
+%
+% If a venue allows 7 or 8 pages, restore fig4 first, then fig3.
+% If you must shrink further, the cheapest cuts are Section V-E (secondary
+% protocol) and the last paragraph of Section V-F.
 %
 % STILL OPEN: a funding sentence if one is required, and confirming the
 % dataset accessed date in refs.bib against your own record of the download.
@@ -80,13 +81,12 @@ tolerance at any step. Four sensors chosen on training data reach
 $0.984 \pm 0.013$, within tolerance of the full array, so three of seven can be
 removed at no measurable cost. Informed selection did \emph{not} reliably beat
 a typical subset of the same size---four of six sizes for permutation-based
-selection, two of six for forward selection---so on this redundant array how
-many sensors are used matters more than which. Degradation falls almost
-entirely on false alarms, which rise from 4\% to 30\%, while missed detections
-stay near zero. We further show that a channel carrying a label-correlated
-recording artefact is a learnable shortcut that marginal importance ranks last
-of eight, and give the diagnostic that exposes it. Code, predictions and all
-generated tables are released.
+selection, two of six for forward---so on this redundant array how many sensors
+are used matters more than which. Degradation falls almost entirely on false
+alarms, which rise from 4\% to 30\% while missed detections stay near zero. We
+further show that a channel carrying a label-correlated recording artefact is a
+learnable shortcut that marginal importance ranks last of eight, and give the
+diagnostic that exposes it. Code, predictions and tables are released.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -133,16 +133,14 @@ median same-size subset (one-sided Wilcoxon, $n=10$, $\alpha=0.05$).
 
 Our contributions are: an exhaustive rather than heuristic subset evaluation,
 giving the full distribution at every size and an explicit oracle bound; an
-evaluation that holds out whole speed bands, with leakage prevented by
-assertions and its magnitude measured rather than assumed; selection confined
-to training data through a nested inner split, so the reported reduction is one
-a practitioner could have achieved; a demonstration that a label-correlated
-recording artefact is a learnable shortcut which marginal importance ranks
-last, with the procedure that exposes it; and a reproducible release of
-pipeline, stored predictions, every table and figure, and a 139-test suite.
-
-We also report a negative result: H3 fails. On this array, how many sensors are
-used matters considerably more than which ones.
+evaluation holding out whole speed bands, with leakage prevented by assertions
+and its magnitude measured rather than assumed; selection confined to training
+data by a nested inner split; a demonstration that a label-correlated recording
+artefact is a learnable shortcut which marginal importance ranks last, with the
+procedure that exposes it; and a reproducible release of pipeline, predictions,
+every table and figure, and a 139-test suite. We also report a negative result:
+H3 fails, and on this array how many sensors are used matters considerably more
+than which ones.
 
 \section{Related Work}
 
@@ -186,17 +184,15 @@ failure mode is what Kaufman \emph{et al.}~\cite{kaufman2011} formalise as
 leakage, and the remedy is their learn--predict separation: keep every segment
 of a recording on one side of the split.
 
-% TRIM 1: this paragraph is background and can go if the paper runs over.
-Second, permutation importance in the form Breiman introduced alongside the
-random forest~\cite{breiman2001} estimates a variable's \emph{marginal}
-contribution---its value given everything else present. Strobl \emph{et
-al.}~\cite{strobl2008} show the measure is biased under correlated predictors,
-since two variables carrying the same information can each score near zero when
-either substitutes for the other. A near-zero score therefore cannot by itself
-distinguish a sensor carrying no information from one merely redundant. Their
-remedy is a conditional permutation scheme, which we do not adopt; we respond
-by reporting each sensor's standalone score and its correlation to the others
-alongside the ranking (Fig.~\ref{fig:profile}).
+Second, permutation importance as Breiman introduced it~\cite{breiman2001}
+estimates a variable's \emph{marginal} contribution. Strobl \emph{et
+al.}~\cite{strobl2008} show this is biased under correlated predictors, since
+two variables carrying the same information can each score near zero when
+either substitutes for the other, so a near-zero score cannot distinguish a
+sensor carrying no information from one merely redundant. Their remedy is
+conditional permutation, which we do not adopt; we instead report each sensor's
+standalone score and its correlation to the others alongside the ranking
+(Fig.~\ref{fig:profile}).
 
 Prior work predominantly adds sensors or proposes methods. Little measures how
 performance degrades as sensors are \emph{removed}, with the subset chosen on
@@ -236,13 +232,12 @@ Each recording is split into five equal non-overlapping windows (9{,}755
 total). From each sensor in each window we compute \textbf{exactly 18
 features}, identical in definition for every sensor: time-domain statistics,
 seven fixed spectral band energies from 5\,Hz to 25\,kHz, and dominant
-frequency, all after mean removal. Holding the count identical is deliberate---a
-subset's score must reflect which sensors it contains, not how many columns
-they contribute---so the full array has $7\times18=126$ features. Standard
-deviation is excluded because after DC removal it equals RMS exactly; a test
-enforces that no two features have a constant ratio. Rotation frequency is
-taken from the file name, which the dataset uses to encode it, and is metadata
-rather than a model feature.
+frequency, all after mean removal. Holding the count identical is
+deliberate---a subset's score must reflect which sensors it contains, not how
+many columns they contribute---so the full array has $7\times18=126$ features.
+Standard deviation is excluded because after DC removal it equals RMS exactly.
+Rotation frequency is taken from the file name, which the dataset uses to
+encode it, and is metadata rather than a model feature.
 
 \subsection{Cross-Validation and Leakage Control}
 \label{sec:leakage}
@@ -286,29 +281,26 @@ and misdiagnosis (fault windows predicted as a \emph{different} fault).
 
 \textbf{The scoring label set is fixed once per outer fold}, from the unique
 values of \texttt{y\_true} in that fold's test set, and shared by every subset
-in it. Taking the union of true and predicted labels instead---the common
-default---would let the denominator vary \emph{between subsets inside one
-fold}, and every comparison here is paired within a fold. Scoring
-unconditionally against all six classes is also wrong, penalising a fold for a
-class it does not contain.
+in it. The common default---the union of true and predicted labels---would let
+the denominator vary \emph{between subsets inside one fold}, and every
+comparison here is paired within a fold.
 
 Two selection strategies run, both confined to the training fold by an inner
 75/25 split itself grouped by recording. \emph{Grouped permutation importance}
 applies one shared row permutation to all 18 columns of a sensor together, so
 the sensor is destroyed as a unit; the five permutations are drawn once per
-split and reused for every sensor, pairing the drops and removing shuffle noise
-from the comparison. \emph{Greedy forward selection} adds the sensor giving the
-highest inner-validation macro-F1 at each step, with deterministic ties.
+split and reused for every sensor, pairing the drops. \emph{Greedy forward
+selection} adds the sensor giving the highest inner-validation macro-F1 at each
+step, with deterministic ties.
 
 One classifier is used for every subset, with no tuning and no feature scaling:
 a random forest of 200 trees with balanced class weights and a fixed seed. This
 is not a method paper; any difference between subsets must come from the
 sensors. All 127 subsets are evaluated on all 10 splits (1{,}270 score rows),
 predictions are stored, and every table and figure is computed from them
-without refitting. \textbf{Selected subsets are never refit}: because model and
-seed are fixed, a selected subset's score \emph{is} its entry in the exhaustive
-results and is looked up, so the two cannot disagree. A test confirms a lookup
-equals an explicit refit.
+without refitting. \textbf{Selected subsets are never refit}: with model and
+seed fixed, a selected subset's score \emph{is} its entry in the exhaustive
+results and is looked up, so the two cannot disagree.
 
 \section{Results}
 
@@ -345,13 +337,12 @@ harmful.
 The primary verdict rests on those two \emph{fair} curves, whose subsets were
 chosen on training data. The oracle curve---$0.8799$, $0.9673$, $0.9841$,
 $0.9881$, $0.9922$, $0.9912$, $0.9917$---also shows no violation but is
-secondary and carries a caveat that must not be dropped. The oracle at each $k$
-is a \emph{maximum} over $\binom{7}{k}$ candidates (7, 21, 35, 35, 21, 7, 1),
-and a maximum over more candidates carries more upward bias, so the curve is
-inflated most at middle $k$ independently of any sensor effect. An apparent
-violation there could be that bias rather than a harmful sensor, which is
-exactly why the verdict does not rest on it. Table~\ref{tab:main} prints the
-candidate count so the bias is visible.
+secondary and carries a caveat. The oracle at each $k$ is a \emph{maximum} over
+$\binom{7}{k}$ candidates (7, 21, 35, 35, 21, 7, 1), and a maximum over more
+candidates carries more upward bias, so the curve is inflated most at middle
+$k$ independently of any sensor effect. An apparent violation there could be
+that bias rather than a harmful sensor, which is why the verdict does not rest
+on it; Table~\ref{tab:main} prints the candidate count so the bias is visible.
 
 \subsection{RQ2: How Few Sensors Suffice}
 
@@ -411,26 +402,22 @@ not standalone proof.
 
 \subsection{Fault Sensitivity}
 
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=\columnwidth]{fig4_detection_errors.pdf}
-  \caption{\FigFourCaption}
-  \label{fig:errors}
-\end{figure}
-
+% The detection-error figure (fig4_detection_errors.pdf, caption
+% \FigFourCaption) was cut here purely for length: every number it plots is
+% stated in the two paragraphs below. Restore it first if space allows.
 Classes do not degrade together. At the full array every class is at or above
 $0.959$ recall. As sensors are removed \emph{normal} degrades first and
 furthest: $0.959$ at $k=7$, $0.922$ at $k=4$, $0.698$ at $k=1$. The two bearing
 classes are most robust, above $0.91$ even at $k=1$, with \emph{imbalance} at
 $0.945$; horizontal misalignment is the weakest fault class at $0.826$.
 
-Fig.~\ref{fig:errors} puts this in operational terms. Missed detection---a
-fault called healthy---is essentially flat and very low throughout, from
-$0.0001$ at $k=7$ to $0.0046$ at $k=1$: even one sensor almost never misses a
-fault outright. Misdiagnosis rises modestly, $0.0044$ to $0.0892$. What
-collapses is the false-alarm rate: $0.0408$ at $k=7$, $0.0776$ at $k=4$,
-$0.302$ at $k=1$. At one sensor roughly three in ten healthy windows are
-flagged faulty.
+In operational terms the three error types diverge sharply. Missed
+detection---a fault called healthy---is essentially flat and very low
+throughout, from $0.0001$ at $k=7$ to $0.0046$ at $k=1$: even one sensor almost
+never misses a fault outright. Misdiagnosis rises modestly, $0.0044$ to
+$0.0892$. What collapses is the false-alarm rate: $0.0408$ at $k=7$, $0.0776$
+at $k=4$, $0.302$ at $k=1$. At one sensor roughly three in ten healthy windows
+are flagged faulty.
 
 This asymmetry is the most useful finding in the per-class results. A reduced
 installation on this rig does not become dangerous---it does not start missing
@@ -440,17 +427,14 @@ answers its alarms. A single macro-F1 number conceals that.
 \subsection{Secondary Analysis: Held-Out Recordings}
 \label{sec:secondary}
 
-% TRIM 2: this subsection can be reduced to its first and last sentences.
 Repeating the analysis with recordings rather than speed bands as the grouping
-gives the same qualitative answers under a less demanding protocol. The full
-array reaches $0.9973 \pm 0.0037$; H1 is supported with zero violations on both
-fair curves; H2 is supported at $k=2$, lower than the primary $k=4$ as expected
-when the model is tested only at speeds it has already seen; H3 is again not
-supported with the same counts, four of six and two of six. The importance
-ranking is essentially unchanged, \texttt{ub\_tan} ($0.2473$) and
-\texttt{ob\_ax} ($0.1449$) again first and second. Agreement on every verdict
-under a $0.020$ dynamic range rather than $0.112$ is the robustness evidence
-this analysis was run for.
+gives the same answers under a less demanding protocol. The full array reaches
+$0.9973 \pm 0.0037$; H1 is supported with zero violations on both fair curves;
+H2 is supported at $k=2$, lower than the primary $k=4$ as expected when the
+model is tested only at speeds it has seen; H3 is again not supported, four of
+six and two of six. The importance ranking is unchanged in order. Agreement on
+every verdict under a $0.020$ dynamic range rather than $0.112$ is the
+robustness evidence this analysis was run for.
 
 \subsection{The Excluded Tachometer Channel}
 \label{sec:tach}
@@ -520,20 +504,15 @@ disappears ($+0.0016$ and $+0.0028$, both at or near $1.0$ on affected and
 unaffected alike), so the artefact did not distort the full-array results,
 which is why primary and supplementary analyses agree on every verdict.
 
-% TRIM 3: this paragraph can go if the paper runs over, though it is the part
-% other groups are most likely to reuse.
-\textbf{The methodological point.} Our own first reading was wrong, and why is
-worth recording. Judging exploitation from \emph{pooled} per-class recall, the
-tachometer's elevated bearing-class recall ($+0.221$) was indistinguishable
-from the control's ($+0.246$), the confusion matrix showed prediction bias
-rather than class skill, and the artefact covers only 10.6\% of
-\emph{underhang} while recall for that class was $0.337$. Each observation is
-correct and the conclusion drawn from them was still wrong: pooling averaged
-670 affected windows with 10{,}040 unaffected and destroyed the contrast that
-mattered. Where a suspected artefact is confined to an identifiable subset of
-recordings, that subset must be isolated before any comparison is
-informative---and a near-zero marginal importance score is not evidence that a
-channel is safe to include.
+\textbf{The methodological point.} Our own first reading was wrong. Judging
+exploitation from \emph{pooled} per-class recall, the tachometer's elevated
+bearing-class recall ($+0.221$) was indistinguishable from the control's
+($+0.246$). That observation is correct and the conclusion drawn from it was
+still wrong: pooling averaged 670 affected windows with 10{,}040 unaffected and
+destroyed the contrast that mattered. Where a suspected artefact is confined to
+an identifiable subset of recordings, that subset must be isolated before any
+comparison is informative---and a near-zero marginal importance score is not
+evidence that a channel is safe to include.
 
 \section{Discussion}
 
@@ -541,34 +520,33 @@ channel is safe to include.
 are as good as seven and the marginal value of the fifth, sixth and seventh is
 within measurement noise. The decision is therefore not a smooth cost/accuracy
 trade-off but a threshold: above roughly four channels, more buy almost
-nothing; below it, cost rises steeply, with two sensors to one costing more
-than seven to four. If the budget permits four, reduction is close to free. If
-it permits one, \emph{which} becomes the dominant design decision---the spread
-across single sensors ($\pm0.077$) is more than ten times that across
-six-sensor subsets ($\pm0.005$).
+nothing; below it, cost rises steeply, two sensors to one costing more than
+seven to four. If the budget permits one, \emph{which} becomes the dominant
+design decision---the spread across single sensors ($\pm0.077$) is more than
+ten times that across six-sensor subsets ($\pm0.005$).
 
 \textbf{Which faults go first.} The class that degrades first is \emph{normal}.
 Reducing sensors here does not produce a system that misses faults but one that
 cries wolf, false alarms rising from 4\% to 30\% while missed detection stays
-near zero. The risk of under-instrumenting is alarm fatigue, not undetected
-failure. Where a specific failure mode drives the business case, the relevant
-curve is that mode's own recall: the bearing classes hold above $0.91$ even at
+near zero: the risk of under-instrumenting is alarm fatigue, not undetected
+failure. Where a specific failure mode drives the business case the relevant
+curve is that mode's own recall---the bearing classes hold above $0.91$ even at
 one sensor, so an installation targeting bearing faults could be reduced
 further than one also expected to certify a machine healthy.
 
 \textbf{Why selection helped so little.} The failure of H3 and the correlation
 structure are one finding seen twice. Six of seven channels are accelerometers
-on the same rig measuring the same excitations through different mountings, and
+on the same rig measuring the same excitations through different mountings, so
 the array is substantially redundant. When many subsets of a size carry nearly
 the same information, most score nearly the same, the distribution is tight,
 and no selection method has room to distinguish itself---hence selected subsets
 in the 46th--74th percentile rather than the 90th. The practical reading is
 encouraging: on a redundant array a reasonable arbitrary choice of four sensors
 will usually do nearly as well as a carefully selected four. But it is a
-genuine negative result for selection methods, and it would not have been
-visible without the exhaustive baseline. It also warns against pruning on
-marginal importance alone, which here would have kept redundant accelerometers
-and might have dropped the one genuinely complementary channel.
+genuine negative result for selection methods, invisible without the exhaustive
+baseline, and it warns against pruning on marginal importance alone---which
+here would have kept redundant accelerometers and might have dropped the one
+genuinely complementary channel.
 
 \subsection{Limitations}
 \label{sec:limitations}
@@ -576,9 +554,9 @@ and might have dropped the one genuinely complementary channel.
 \textbf{Single dataset and laboratory rig.} All results come from MaFaulDa, and
 the redundancy structure driving our H3 result is a property of this particular
 array; generalisation to other machines, mountings and fault types is untested.
-The recordings come from a controlled rig, not machinery in service, so noise,
-loading and mounting are more benign than in the field and the very high
-absolute scores should be read in that light.
+The rig is controlled rather than in service, so noise, loading and mounting
+are more benign than in the field and the high absolute scores should be read
+in that light.
 
 \textbf{One classifier.} A single fixed random forest is used by design, so
 differences between subsets are attributable to the sensors; conclusions about
@@ -597,14 +575,13 @@ proof.
 \textbf{Tachometer channel quality.} On the 67 affected recordings a
 rising-edge speed estimate from the tachometer overcounts, reporting up to
 $320.6$\,Hz against a true $50.79$\,Hz. Those traces swing about 22\% wider
-(median standard deviation $2.118$ against $1.742$), which lowers the midpoint
+(median standard deviation $2.118$ against $1.742$), lowering the midpoint
 threshold from about $1.97$ to $0.80$--$1.27$ and into the noise band. An FFT
 of the same channel recovers the correct frequency to within about $1.3$\,Hz,
 so the signal carries the information and only the threshold crossing fails. We
-therefore take rotation frequency from the file name and report the tachometer
-estimate alongside without using it. This is a property of the dataset's
-tachometer channel on those files rather than of the method, and it matters for
-any work deriving speed from that channel.
+therefore take rotation frequency from the file name. This is a property of the
+dataset's channel on those files rather than of the method, and it matters for
+any work deriving speed from it.
 
 \section{Conclusion}
 
@@ -633,11 +610,9 @@ Future work should test whether the four-sensor threshold persists on machinery
 in service; whether the redundancy that defeats selection here is a property of
 this array or of accelerometer arrays generally; and how the curve changes for
 a model consuming raw time series. Runtime sensor loss---how a full-sensor
-model behaves when an installed sensor fails---is a distinct and practically
-important experiment this design does not address.
-
-The pipeline, stored predictions, every table and figure, and the test suite
-that verifies them are released with this paper.
+model behaves when an installed sensor fails---is a distinct experiment this
+design does not address. The pipeline, stored predictions, every table and
+figure, and the test suite that verifies them are released with this paper.
 
 \section*{Acknowledgments}
 % The AI-assistance disclosure below is REQUIRED by IEEE policy and is written
