@@ -170,3 +170,36 @@ def test_run_metadata_records_the_dirty_scope() -> None:
     assert meta["git_dirty_scope"] == SOURCE_PATHS
     assert "common.py" in meta["git_dirty_scope"]
     assert "tests" in meta["git_dirty_scope"]
+
+def test_run_metadata_contains_no_local_absolute_paths() -> None:
+    """Metadata is committed and published, so it must not name this machine.
+
+    The six tracked ``run_metadata.json`` files carried the operating user's
+    account name in ``python_executable``, ``results_dir`` and a nested
+    ``data_dir`` until 2026-11-02. Paths inside the repository are kept, but
+    rewritten relative to the root, so the record is identical on every
+    machine and leaks nothing.
+    """
+    import json
+
+    from common import ROOT, run_metadata
+
+    meta = run_metadata(
+        "probe.py",
+        results_dir=str(ROOT / "results" / "speed"),
+        inputs={"features": {"data_dir": str(ROOT / "data" / "mafaulda"),
+                             "python_executable": str(ROOT / ".venv" / "x")}},
+    )
+    blob = json.dumps(meta)
+
+    assert str(ROOT) not in blob, "the repository root survived in the record"
+    assert ROOT.as_posix() not in blob
+    assert str(Path.home()) not in blob, "a home directory survived"
+    assert ROOT.name + "/" not in blob, (
+        "a path is still anchored at the repository name, not relative to it")
+
+    # relativised, not deleted: the provenance is still readable
+    assert meta["results_dir"] == "results/speed"
+    assert meta["inputs"]["features"]["data_dir"] == "data/mafaulda"
+    assert meta["inputs"]["features"]["python_executable"] == ".venv/x"
+    assert not Path(meta["python_executable"]).is_absolute()

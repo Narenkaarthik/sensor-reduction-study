@@ -659,6 +659,54 @@ def package_versions() -> dict[str, str]:
     return versions
 
 
+def _repo_relative(value: object) -> object:
+    """Strip this machine's absolute paths out of a metadata value.
+
+    The metadata is committed and published, so an absolute path in it leaks
+    the operating user's account name. Paths inside the repository carry real
+    provenance information, so they are kept but rewritten relative to the
+    repository root with forward slashes, which also makes the record
+    identical on every machine. A path outside the repository has its home
+    directory replaced by ``~``; the only one we write is the interpreter
+    location, and where the virtual environment lives is not provenance worth
+    leaking.
+
+    Applies recursively, because ``04_analyze.py`` nests the upstream
+    ``run_metadata`` records of its inputs, and those were written before this
+    function existed.
+
+    Args:
+        value: Any JSON-serialisable metadata value.
+
+    Returns:
+        The value with local paths rewritten.
+    """
+    if isinstance(value, dict):
+        return {k: _repo_relative(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_repo_relative(v) for v in value]
+    if isinstance(value, Path):
+        value = str(value)
+    if not isinstance(value, str):
+        return value
+
+    out, touched = value, False
+    for base in {str(ROOT), ROOT.as_posix()}:
+        for sep in ("\\", "/"):
+            if base + sep in out:
+                out, touched = out.replace(base + sep, ""), True
+        if base in out:
+            out, touched = out.replace(base, "."), True
+    if touched:
+        return out.replace("\\", "/")
+
+    home = Path.home()
+    for base in {str(home), home.as_posix()}:
+        if base in out:
+            out, touched = out.replace(base, "~"), True
+    return out.replace("\\", "/") if touched else out
+
+
 def run_metadata(script: str, **extra: object) -> dict[str, object]:
     """Build the metadata record written alongside every generated output.
 
@@ -671,7 +719,7 @@ def run_metadata(script: str, **extra: object) -> dict[str, object]:
         A JSON-serialisable record.
     """
     git = git_state()
-    return {
+    record = {
         "script": script,
         "git_dirty_scope": git["dirty_scope"],
         "utc_timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -684,6 +732,9 @@ def run_metadata(script: str, **extra: object) -> dict[str, object]:
         "command_line": " ".join(sys.argv),
         **extra,
     }
+    # Absolute paths would publish the operating user's account name; see
+    # _repo_relative. Applied once, here, so no caller can forget it.
+    return _repo_relative(record)
 
 
 def write_run_metadata(directory: Path, script: str, **extra: object) -> Path:
