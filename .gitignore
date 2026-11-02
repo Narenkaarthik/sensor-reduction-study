@@ -25,3 +25,6 @@ __pycache__/
 # ---------------------------------------------------------------------------
 results/quick_*/
 results/dryrun_*/
+
+# Overleaf submission bundle, rebuilt on demand
+paper/overleaf-bundle.zip
