@@ -16,22 +16,31 @@
 % have not copied from one of those. If a number here disagrees with the
 % generated file, the generated file is right and this one is stale.
 %
-% LENGTH: EXACTLY 6 PAGES, verified by compiling with MiKTeX on 2026-11-02.
-% pdflatex reports "Output written on main.pdf (6 pages)" with zero Overfull
-% boxes and no undefined references. Page 6 is full and ends with the last
-% reference, so there is NO slack: any addition pushes to a seventh page.
+% LENGTH: 7 PAGES, verified by compiling with MiKTeX on 2026-11-07. Zero
+% Overfull boxes, no undefined references. All seven pages are well filled;
+% page 7 carries about 900 words, in line with the others.
 %
-% Getting here cost two figures. Cut for space only, all still in
-% ../figures/speed/ and restorable in one block each:
-%   fig4_detection_errors  (caption \FigFourCaption) -- every number it plots
-%                          is stated in the text of Section IV-D
+% IT WAS 6 PAGES on 2026-11-02. Five review-driven additions cost almost
+% exactly one page:
+%   1. Section V-F, a second model family (SVM) over all 127 subsets
+%   2. The Nadeau-Bengio corrected t-test for H3, in Section IV-C
+%   3. The physical grounding paragraph in Section V
+%   4. The cross-channel feature limitation
+%   5. The expanded field-versus-rig limitation
+%
+% TO GET BACK TO 6 PAGES, if the venue caps there with no over-length option,
+% drop Section V-F (the SVM subsection) and the "Model dependence" limitation
+% back to its one-sentence form. That is the largest single block and the only
+% one that can go without weakening a claim the paper still makes elsewhere.
+% Do NOT cut items 2-5: each either corrects a statistical statement or
+% removes an overclaim, and the paper would be less accurate without them.
+%
+% FIGURES: 2, both single-column. fig7_sensor_profile replaced the old fig2
+% and fig6b, carrying marginal importance, standalone score and correlation in
+% one panel. Cut for space only, all still generated and in ../figures/speed/:
+%   fig4_detection_errors (\FigFourCaption) -- every number it plots is in the
+%   text of Section IV-D; restore it first if space allows
 %   fig3_per_class_recall, fig5b_confusion_k1, fig6_sensor_correlation
-% fig7_sensor_profile replaced the old fig2 and fig6b: it carries marginal
-% importance, standalone score and correlation in one panel.
-%
-% If a venue allows 7 or 8 pages, restore fig4 first, then fig3.
-% If you must shrink further, the cheapest cuts are Section V-E (secondary
-% protocol) and the last paragraph of Section V-F.
 %
 % STILL OPEN: a funding sentence if one is required, and confirming the
 % dataset accessed date in refs.bib against your own record of the download.
@@ -83,8 +92,10 @@ removed at no measurable cost. Informed selection did \emph{not} reliably beat
 a typical subset of the same size---four of six sizes for permutation-based
 selection, two of six for forward---so on this redundant array how many sensors
 are used matters more than which. Degradation falls almost entirely on false
-alarms, which rise from 4\% to 30\% while missed detections stay near zero. We
-further show that a channel carrying a label-correlated recording artefact is a
+alarms, which rise from 4\% to 30\% while missed detections stay near zero. An
+SVM reproduces the curve's shape and H1 but meets the tolerance at $k=5$, so
+the reduction threshold is model-dependent where the shape is not. We further
+show that a channel carrying a label-correlated recording artefact is a
 learnable shortcut that marginal importance ranks last of eight, and give the
 diagnostic that exposes it. Code, predictions and tables are released.
 \end{abstract}
@@ -138,9 +149,10 @@ and its magnitude measured rather than assumed; selection confined to training
 data by a nested inner split; a demonstration that a label-correlated recording
 artefact is a learnable shortcut which marginal importance ranks last, with the
 procedure that exposes it; and a reproducible release of pipeline, predictions,
-every table and figure, and a 139-test suite. We also report a negative result:
-H3 fails, and on this array how many sensors are used matters considerably more
-than which ones.
+every table and figure, and a 139-test suite. We also report two negative
+results: H3 fails, so on this array how many sensors are used matters
+considerably more than which ones; and a second model family reproduces the
+curve's shape but not the exact reduction threshold.
 
 \section{Related Work}
 
@@ -393,12 +405,21 @@ $k=4$ ($p=0.0879$) or $k=6$ ($p=0.0742$); for forward selection at only two of
 six ($k=1$, $k=2$, both $p=0.0010$). The pre-registered criterion required all
 six. Percentile ranks say the same more gently: the selected subsets sit
 between the 46th and 74th percentile of their size, so selection helps modestly
-and inconsistently rather than reliably finding a top subset. A post-hoc Holm
-adjustment changes nothing material (four of six and two of six survive), but
-the verdict stands on the raw $p$-values regardless. The ten scores come from
-two repeats over the same recordings and are not mutually independent, so these
-$p$-values are supporting evidence alongside effect sizes and percentile ranks,
-not standalone proof.
+and inconsistently rather than reliably finding a top subset.
+
+Two post-hoc checks, neither of which disturbs the pre-registered verdict,
+both push in the same direction. Holm adjustment for the family of six
+comparisons changes nothing material (four of six and two of six survive). More
+importantly, the ten scores are \emph{not} mutually independent---two repeats
+reuse the same recordings, so training sets overlap heavily and the naive
+variance is too small---so we also report the Nadeau--Bengio corrected
+resampled $t$-test, which replaces the $1/n$ variance factor with $1/n+1/4$ for
+5-fold. Under it only three of six survive for permutation selection and one of
+six for forward. H3 fails more decisively once dependence is accounted for, not
+less. We do not report a $5\times2$cv $t$-test: that procedure requires five
+replications of \emph{two}-fold cross-validation, whereas this design is two
+repeats of \emph{five}-fold, and halving the training set would change the
+sensor-count curve itself rather than only its $p$-values.
 
 \subsection{Fault Sensitivity}
 
@@ -435,6 +456,38 @@ model is tested only at speeds it has seen; H3 is again not supported, four of
 six and two of six. The importance ranking is unchanged in order. Agreement on
 every verdict under a $0.020$ dynamic range rather than $0.112$ is the
 robustness evidence this analysis was run for.
+
+\subsection{Supplementary: A Second Model Family}
+\label{sec:svm}
+
+Fixing one model isolates the sensor effect, but it leaves open whether the
+curve reflects the sensors or a tree-ensemble inductive bias. We therefore
+re-evaluated all 127 subsets on all 10 splits with an RBF support vector
+machine---a different family with a different bias---at scikit-learn defaults,
+with standardisation fitted inside the pipeline on the training fold only. The
+subsets compared at each $k$ are those the primary analysis selected on
+training data; selection is not redone, so the question asked is whether the
+reduction the primary analysis found still holds under another model.
+
+\textbf{The shape replicates; the exact threshold does not.} The SVM is
+uniformly weaker in absolute terms---$0.9787$ with all seven sensors against
+the forest's $0.9917$---but the curve has the same concave form, the same
+monotone fall in the all-subsets mean ($0.976$ at $k=6$ to $0.673$ at $k=1$),
+and the same sharp widening of spread at small $k$ ($\pm0.005$ to $\pm0.116$).
+\textbf{H1 is supported with zero violations}, as in the primary analysis.
+\textbf{H2, however, is met at $k=5$ rather than $k=4$}: the four-sensor subset
+reaches $0.9652$ against a threshold of $0.9687$ and falls just short.
+
+That difference is the honest answer to the question. The qualitative
+conclusions of this paper---that performance degrades gracefully then sharply,
+that no sensor is actively harmful, and that a substantial reduction is
+available---are not artefacts of the forest. The precise number of sensors that
+can be dropped \emph{is} model-dependent, and a practitioner transferring the
+$k=4$ figure to a different classifier should re-derive it. We also note that
+under the SVM the six-sensor subset marginally exceeds the full array
+($0.9822$ against $0.9787$), a gap well inside the $0.01$ tolerance and
+consistent with the full array's larger variance under this model
+($\pm0.026$).
 
 \subsection{The Excluded Tachometer Channel}
 \label{sec:tach}
@@ -534,6 +587,27 @@ curve is that mode's own recall---the bearing classes hold above $0.91$ even at
 one sensor, so an installation targeting bearing faults could be reduced
 further than one also expected to certify a machine healthy.
 
+\textbf{Why these axes, physically.} The ranking is not arbitrary with respect
+to the mechanics. The two dominant channels measure in different planes: a
+tangential axis in the plane of rotation and an axial axis along the shaft.
+Radial and tangential axes at a bearing both respond to once-per-revolution
+forcing from residual imbalance and to the housing's response to
+rolling-element impacts, which excite high-frequency structural resonances and
+are the basis of envelope diagnosis~\cite{randall2011}. That shared forcing is
+the physical reason \texttt{ub\_rad} and \texttt{ub\_tan} are the most
+correlated pair in the array ($\rho=0.888$) and why either largely substitutes
+for the other---high standalone scores, low marginal contribution. Axial
+response is excited by a different mechanism, the out-of-plane component that
+angular misalignment introduces, and two of the six classes here are
+misalignment conditions. An in-plane and an axial channel therefore sample
+complementary rather than overlapping physics, which is consistent with
+\texttt{ub\_tan} and \texttt{ob\_ax} ranking first and second and with the
+microphone---a non-contact channel subject to neither mounting path---being the
+least correlated of the seven. We offer this as an interpretation consistent
+with the measurements, not as something the experiment tested; the dataset does
+not document which bearing carries the triaxial unit, so we do not reason about
+specific mounting geometry.
+
 \textbf{Why selection helped so little.} The failure of H3 and the correlation
 structure are one finding seen twice. Six of seven channels are accelerometers
 on the same rig measuring the same excitations through different mountings, so
@@ -551,17 +625,41 @@ genuinely complementary channel.
 \subsection{Limitations}
 \label{sec:limitations}
 
-\textbf{Single dataset and laboratory rig.} All results come from MaFaulDa, and
-the redundancy structure driving our H3 result is a property of this particular
-array; generalisation to other machines, mountings and fault types is untested.
-The rig is controlled rather than in service, so noise, loading and mounting
-are more benign than in the field and the high absolute scores should be read
-in that light.
+\textbf{Single dataset, and a rig rather than a plant.} All results come from
+MaFaulDa, and the redundancy structure driving our H3 result is a property of
+this particular array. More importantly, the recordings come from a controlled
+rig running at steady speed under no applied load, in a laboratory acoustic
+environment, with faults introduced deliberately at known severities. Field
+machinery is not like that: load varies with process demand, speed transients
+and nearby equipment inject broadband noise, mounting degrades, and faults
+develop gradually rather than appearing at a set magnitude. Each of those
+raises within-class variance, and the absolute scores here---a full array at
+$0.9917$ and even one sensor near $0.88$---should be read as an upper envelope
+that benign conditions make possible, not as field performance. The
+\emph{shape} of the degradation curve is the transferable claim; its height is
+not.
 
-\textbf{One classifier.} A single fixed random forest is used by design, so
-differences between subsets are attributable to the sensors; conclusions about
-relative sensor value may not transfer to other model families, particularly
-ones consuming raw time series.
+\textbf{No cross-channel features.} Each sensor contributes exactly 18
+features computed from its own signal, which is what makes a subset's score
+attributable to the sensors rather than to a differing feature count. The cost
+is that quantities defined only \emph{between} channels are absent: relative
+phase between orthogonal axes at a bearing, cross-spectra and coherence, and
+the orbit and full-spectrum representations that distinguish forward from
+backward whirl. These are standard in industrial diagnosis and are precisely
+the quantities a multi-sensor array is well placed to provide, so an array
+evaluated with them might degrade differently---plausibly more sharply, since
+such features vanish entirely when one of a pair is removed. Our curve
+therefore characterises sensor reduction under per-channel features, and
+extending it to cross-channel ones is open work.
+
+\textbf{Model dependence.} A single fixed random forest carries the primary
+analysis, by design, so that differences between subsets are attributable to
+the sensors. Section~\ref{sec:svm} tests how far that choice constrains the
+result: under an SVM the curve shape, H1 and the widening spread all replicate,
+but H2 is met at $k=5$ rather than $k=4$, so the \emph{threshold} is
+model-dependent even where the shape is not. Two families are not many, and
+neither consumes raw time series, where a model able to exploit temporal
+structure directly might weight the sensors differently.
 
 \textbf{Design-time reduction, not runtime loss.} Every subset model is
 retrained on that subset. This answers which sensors to install, not what

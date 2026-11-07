@@ -39,6 +39,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 from numpy.typing import NDArray  # noqa: E402
+from scipy.stats import t as stats_t
 from scipy.stats import wilcoxon  # noqa: E402
 from sklearn.metrics import confusion_matrix  # noqa: E402
 
@@ -139,6 +140,48 @@ def safe_wilcoxon(selected: list[float], reference: list[float]) -> float | None
     if np.allclose(diff, 0.0):
         return None
     return float(wilcoxon(selected, reference, alternative="greater").pvalue)
+
+
+def corrected_resampled_t(selected: list[float],
+                          reference: list[float]) -> float | None:
+    """One-sided Nadeau-Bengio corrected resampled t-test.
+
+    SUPPLEMENTARY, POST HOC. The pre-registered H3 verdict is the Wilcoxon
+    test above and is not affected by this.
+
+    The ordinary paired t-test assumes the per-split differences are
+    independent. They are not: repeated k-fold reuses the same recordings, so
+    the training sets of different splits overlap heavily and the naive
+    variance underestimates the true one, inflating the Type I error rate.
+    Nadeau and Bengio's correction replaces the 1/n variance factor with
+    ``1/n + n_test/n_train``, which for 5-fold is 1/n + 1/4.
+
+    Why this and not a 5x2cv t-test: Dietterich's 5x2cv procedure requires
+    five replications of TWO-fold cross-validation, and this study runs two
+    repeats of FIVE-fold. The two designs both yield 10 scores but are not
+    interchangeable, and 2-fold would train every model on half the data,
+    changing the sensor-count curve itself rather than only its p-values.
+
+    Args:
+        selected: Per-split score of the selected subset.
+        reference: Per-split reference score, the same-size median.
+
+    Returns:
+        The one-sided p-value, or ``None`` if every difference is zero.
+    """
+    diff = np.asarray(selected, dtype=float) - np.asarray(reference,
+                                                          dtype=float)
+    n = diff.size
+    if n < 2 or not np.any(diff):
+        return None
+    variance = float(np.var(diff, ddof=1))
+    if variance <= 0:
+        return None
+    # 5-fold: the test fold is 1/5 of the data and the training fold 4/5
+    ratio = 1.0 / (N_SPLITS - 1)
+    denominator = np.sqrt((1.0 / n + ratio) * variance)
+    t_stat = float(np.mean(diff)) / denominator
+    return float(stats_t.sf(t_stat, df=n - 1))
 
 
 def error_rates(y_true: NDArray[np.int64],
@@ -444,6 +487,8 @@ def build_main_table(scores: pd.DataFrame, selection: dict
                                            if len(names) > 1 else np.nan)
             row[f"{strategy}_p"] = (safe_wilcoxon(picked, medians)
                                     if len(names) > 1 else None)
+            row[f"{strategy}_p_nb"] = (corrected_resampled_t(picked, medians)
+                                       if len(names) > 1 else None)
             curves[strategy].append(float(np.mean(picked)))
             curves[f"{strategy}_sd"].append(float(np.std(picked)))
 
@@ -452,6 +497,8 @@ def build_main_table(scores: pd.DataFrame, selection: dict
     table = pd.DataFrame(rows)
     table["perm_p"] = table["perm_p"].astype(float)
     table["fwd_p"] = table["fwd_p"].astype(float)
+    table["perm_p_nb"] = table["perm_p_nb"].astype(float)
+    table["fwd_p_nb"] = table["fwd_p_nb"].astype(float)
     curves["k"] = [float(k) for k in ks]
     return table, wide, dict(curves)
 
@@ -737,6 +784,43 @@ def write_hypotheses(table: pd.DataFrame, curves: dict, full_mean: float,
                 out.append(f"      k={k}: raw p=--  Holm-adjusted p=--")
         n_sig = sum(1 for v in adjusted.values() if v < ALPHA)
         out.append(f"      {n_sig}/{len(adjusted)} survive Holm at alpha = {ALPHA}")
+        out.append("")
+
+    out.append("-" * 70)
+    out.append("SUPPLEMENTARY, POST HOC: NADEAU-BENGIO CORRECTED t-TEST FOR H3")
+    out.append("  NOT the pre-registered test; the H3 verdicts above stand on")
+    out.append(f"  the raw Wilcoxon p-values against alpha = {ALPHA}.")
+    out.append("  The paired split scores are NOT independent: repeated k-fold")
+    out.append("  reuses the same recordings, so training sets overlap and the")
+    out.append("  naive variance is too small. This test replaces the 1/n")
+    out.append(f"  variance factor with 1/n + 1/{N_SPLITS - 1}, which is the")
+    out.append("  Nadeau-Bengio correction for 5-fold, and is markedly more")
+    out.append("  conservative than the uncorrected tests above.")
+    out.append("  A 5x2cv t-test is NOT reported: it requires 5 replications of")
+    out.append("  TWO-fold CV, whereas this study runs 2 repeats of FIVE-fold.")
+    out.append("")
+    for strategy, label in (("perm", "Permutation-selected"),
+                            ("fwd", "Forward-selected")):
+        n_sig = 0
+        n_tested = 0
+        out.append(f"    {label}:")
+        for _, r in table.iterrows():
+            k = int(r["k"])
+            if k >= len(SENSORS):
+                continue
+            raw, corrected = r[f"{strategy}_p"], r[f"{strategy}_p_nb"]
+            if pd.isna(corrected):
+                out.append(f"      k={k}: raw p=--  corrected p=--")
+                continue
+            n_tested += 1
+            flag = ""
+            if corrected < ALPHA:
+                n_sig += 1
+                flag = "  significant after correction"
+            out.append(f"      k={k}: raw p={raw:.4f}  "
+                       f"corrected p={corrected:.4f}{flag}")
+        out.append(f"      {n_sig}/{n_tested} survive the correction at "
+                   f"alpha = {ALPHA}")
         out.append("")
 
     out.append("-" * 70)

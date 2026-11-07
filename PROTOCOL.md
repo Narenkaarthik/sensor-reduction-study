@@ -435,6 +435,53 @@ must come from the sensors, so the model is held fixed. `class_weight="balanced"
 is set because `normal` is a comparatively small class; it was chosen in advance,
 not tuned.
 
+### 4.1 Supplementary second model family
+
+**Added 2026-11-07, after the primary study was complete and written up.**
+Recorded here because the rule above says no alternative classifiers, and this
+adds one.
+
+**The rule above still governs the primary analysis, which is unchanged.** The
+addition is a third separate analysis, alongside the secondary (held-out
+recordings) and supplementary (8-sensor) ones, and no number it produces
+replaces a primary number.
+
+**Why.** Fixing one model isolates the sensor effect, but leaves open whether
+the curve reflects the sensors or a tree-ensemble inductive bias. That is a
+reviewer-level objection the study could not answer from inside its own design.
+
+**What was run.** `scripts/secondary_svm.py` re-evaluates all 127 subsets on
+all 10 splits with an RBF SVM at scikit-learn defaults, speed mode. Two
+departures from the rule above, both confined to that script:
+
+- **Feature scaling.** An RBF SVM is not scale invariant. The scaler is fitted
+  **inside the pipeline on the training fold only**, so it never sees the test
+  fold and introduces no leakage. The Random Forest is untouched.
+- **A second family.** `C=1`, `gamma="scale"`, untuned, for the same reason the
+  forest is untuned: a tuned SVM against an untuned forest would confound model
+  family with tuning effort.
+
+Selection is **not** redone. The subsets compared at each *k* are the ones the
+primary analysis selected by permutation importance on training data, so the
+question asked is whether the reduction the primary analysis found survives a
+change of model.
+
+**What it showed.** The shape replicates and the threshold does not.
+
+| | 7 sensors (primary, RF) | SVM (supplementary) |
+|---|---|---|
+| Full configuration | 0.9917 | 0.9787 |
+| H1 | SUPPORTED, 0 violations | SUPPORTED, 0 violations |
+| H2 fair *k* | 4 | **5** |
+| All-subsets mean, *k*=1 → *k*=6 | 0.797 → 0.986 | 0.673 → 0.976 |
+| All-subsets sd, *k*=1 → *k*=6 | 0.077 → 0.005 | 0.116 → 0.005 |
+
+The qualitative conclusions are therefore not artefacts of the forest, while
+the exact number of sensors that can be dropped **is** model-dependent. That is
+reported in the paper as a limitation rather than buried.
+
+Outputs: `tables/speed/supp_svm_curve.csv` and `supp_svm_verdicts.txt`.
+
 ---
 
 ## 5. Cross-validation

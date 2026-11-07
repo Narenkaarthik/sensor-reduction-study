@@ -38,6 +38,10 @@ python scripts/supplementary_tables.py --split recording
 python scripts/secondary_8sensor.py --analyse-only
 python scripts/tach_learnability.py
 python scripts/artifact_exploitation.py
+python scripts/tach_effect_sizes.py
+python scripts/fig_sensor_profile.py --split speed
+python scripts/fig_sensor_profile.py --split recording
+python scripts/secondary_svm.py --split speed      # ~15 min
 ```
 
 ---
@@ -88,6 +92,8 @@ unchanged, so no recorded number is affected.
 | File | Contains | Feeds |
 |---|---|---|
 | `supp_sensor_profile.csv` | Per sensor: marginal permutation importance, standalone single-sensor macro-F1, mean \|ρ\| to the other sensors — the three views side by side. | RQ3 discussion: separating redundancy from absence of information |
+| `supp_svm_curve.csv` | **Second model family.** Per *k*: all-subsets mean/sd/median, oracle, and the primary-selected subset's mean/sd, under an RBF SVM over all 127 subsets. | Section V-F: whether the curve is a tree-ensemble artefact |
+| `supp_svm_verdicts.txt` | H1 and H2 under the SVM, by the same thresholds as the primary run. | Section V-F |
 | `supp_oracle_membership.csv` | How often each sensor appears in the oracle subset at each *k*. | RQ3; which sensors the upper bound relies on |
 | `supp_selected_membership.csv` | The same counts for permutation- and forward-selected subsets. | RQ3; selection stability |
 

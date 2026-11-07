@@ -35,3 +35,6 @@ paper/*.log
 paper/*.bbl
 paper/*.blg
 paper/*.out
+
+# an extracted copy of the submission bundle, if one is unpacked in place
+paper/overleaf-bundle/
