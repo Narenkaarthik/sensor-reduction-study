@@ -1,0 +1,8 @@
+SUPPLEMENTARY SVM ANALYSIS (not the primary protocol)
+Split mode: speed
+Subsets are those the PRIMARY analysis selected by permutation
+importance on training data; selection is not redone here.
+
+Full configuration (7 sensors): 0.9787
+H1 (primary-selected curve): SUPPORTED (0 violation(s), TOLERANCE=0.01)
+H2 threshold = 0.9687; smallest qualifying k = 5

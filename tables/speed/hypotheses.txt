@@ -102,6 +102,37 @@ SUPPLEMENTARY, POST HOC: HOLM-ADJUSTED p-VALUES FOR H3
       2/6 survive Holm at alpha = 0.05
 
 ----------------------------------------------------------------------
+SUPPLEMENTARY, POST HOC: NADEAU-BENGIO CORRECTED t-TEST FOR H3
+  NOT the pre-registered test; the H3 verdicts above stand on
+  the raw Wilcoxon p-values against alpha = 0.05.
+  The paired split scores are NOT independent: repeated k-fold
+  reuses the same recordings, so training sets overlap and the
+  naive variance is too small. This test replaces the 1/n
+  variance factor with 1/n + 1/4, which is the
+  Nadeau-Bengio correction for 5-fold, and is markedly more
+  conservative than the uncorrected tests above.
+  A 5x2cv t-test is NOT reported: it requires 5 replications of
+  TWO-fold CV, whereas this study runs 2 repeats of FIVE-fold.
+
+    Permutation-selected:
+      k=1: raw p=0.0039  corrected p=0.0460  significant after correction
+      k=2: raw p=0.0039  corrected p=0.0442  significant after correction
+      k=3: raw p=0.0010  corrected p=0.0313  significant after correction
+      k=4: raw p=0.0879  corrected p=0.1725
+      k=5: raw p=0.0156  corrected p=0.0945
+      k=6: raw p=0.0742  corrected p=0.1562
+      3/6 survive the correction at alpha = 0.05
+
+    Forward-selected:
+      k=1: raw p=0.0010  corrected p=0.0057  significant after correction
+      k=2: raw p=0.0010  corrected p=0.0542
+      k=3: raw p=0.8428  corrected p=0.8086
+      k=4: raw p=0.6084  corrected p=0.7018
+      k=5: raw p=0.1914  corrected p=0.2606
+      k=6: raw p=0.2031  corrected p=0.4022
+      1/6 survive the correction at alpha = 0.05
+
+----------------------------------------------------------------------
 NOTE ON INDEPENDENCE
   Scores from repeated cross-validation are not fully
   independent: the 2 repeats reuse the same recordings,
