@@ -49,6 +49,42 @@ H2: some k < 7 reaches mean macro-F1 >= (full - TOLERANCE) = 0.9873.
 
     VERDICT: SUPPORTED (on the fair, permutation-selected result)
     The FAIR number is the answer to the research question. The
+    oracle number only shows what would be possible if the
+    best subset were known in advance, which it never is.
+
+    SUPPLEMENTARY: NON-INFERIORITY, the inferential version
+    H2 above compares POINT ESTIMATES against the tolerance.
+    That is what was pre-specified, and the verdict stands on
+    it. But a mean inside a margin is not the same claim as
+    'demonstrably within the margin', so the test below asks
+    the inferential question directly, for each k:
+
+      H0: mean(full - k) >= margin   (the loss is at least
+                                      the margin)
+      H1: mean(full - k) <  margin   (the loss is smaller)
+
+    margin = 0.01, one-sided, alpha = 0.05.
+    The standard error carries the Nadeau-Bengio correction,
+    because the paired differences come from repeated k-fold
+    and are NOT independent; the interval is therefore wider
+    than a naive one, deliberately.
+
+    Permutation-selected, against the full configuration:
+      k   mean diff   95% CI (corrected)      p      verdict
+      1   +0.0217     [+0.0097, +0.0336]   0.9727   not shown
+      2   +0.0053     [-0.0036, +0.0141]   0.1285   not shown
+      3   +0.0002     [-0.0094, +0.0098]   0.0235   NON-INFERIOR
+      4   +0.0022     [-0.0032, +0.0076]   0.0049   NON-INFERIOR
+      5   +0.0012     [-0.0012, +0.0037]   0.0000   NON-INFERIOR
+      6   +0.0002     [-0.0011, +0.0015]   0.0000   NON-INFERIOR
+
+    READ THIS CAREFULLY: 'not shown' does NOT mean the
+    configuration is inferior. With n = 10 dependent scores
+    the test has little power, so failing to demonstrate
+    non-inferiority is the expected outcome for a difference
+    this small. The honest summary is that the point estimate
+    clears the tolerance while the evidence is not strong
+    enough to call it demonstrated equivalence.
     oracle number only shows what would be possible if the best
     subset were known in advance, which it never is.
 
