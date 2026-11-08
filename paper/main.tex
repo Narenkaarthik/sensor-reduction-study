@@ -16,24 +16,24 @@
 % have not copied from one of those. If a number here disagrees with the
 % generated file, the generated file is right and this one is stale.
 %
-% LENGTH: 7 PAGES, verified by compiling with MiKTeX on 2026-11-07. Zero
-% Overfull boxes, no undefined references. All seven pages are well filled;
-% page 7 carries about 900 words, in line with the others.
+% LENGTH: 8 PAGES, verified by compiling with MiKTeX on 2026-11-08. Zero
+% Overfull boxes, no undefined references. All eight pages are well filled
+% (797-978 words each).
 %
-% IT WAS 6 PAGES on 2026-11-02. Five review-driven additions cost almost
-% exactly one page:
-%   1. Section V-F, a second model family (SVM) over all 127 subsets
-%   2. The Nadeau-Bengio corrected t-test for H3, in Section IV-C
-%   3. The physical grounding paragraph in Section V
-%   4. The cross-channel feature limitation
-%   5. The expanded field-versus-rig limitation
+% IT GREW FROM 7 after a review pass. The additions, in order of how hard
+% they are to remove:
+%   1. Table II, the non-inferiority analysis, and the paragraph qualifying
+%      H2. DO NOT CUT: without it the paper claims equivalence it has not
+%      demonstrated. This is the change that most improves the paper.
+%   2. Table I, the full feature specification. Cuttable to a URL pointing at
+%      the repository if a venue is strict, but reproducibility suffers.
+%   3. The tolerance justification, the demonstrated-vs-not paragraph in the
+%      conclusion, and the expanded non-independence limitation. All short
+%      and all corrective; cutting them reintroduces overclaims.
 %
-% TO GET BACK TO 6 PAGES, if the venue caps there with no over-length option,
-% drop Section V-F (the SVM subsection) and the "Model dependence" limitation
-% back to its one-sentence form. That is the largest single block and the only
-% one that can go without weakening a claim the paper still makes elsewhere.
-% Do NOT cut items 2-5: each either corrects a statistical statement or
-% removes an overclaim, and the paper would be less accurate without them.
+% TO REACH 6 PAGES, if a venue hard-caps there: drop Section V-F (the SVM
+% subsection) and Table I, and shorten the "Model dependence" limitation.
+% That is roughly two pages and loses one real result plus the feature spec.
 %
 % FIGURES: 2, both single-column. fig7_sensor_profile replaced the old fig2
 % and fig6b, carrying marginal importance, standalone score and correlation in
@@ -87,8 +87,10 @@ chosen from training data alone and three hypotheses fixed in advance. Macro-F1
 falls from $0.9917 \pm 0.0066$ with seven sensors to $0.8799$ for the best
 single sensor, and removing a sensor never helped by more than the $0.01$
 tolerance at any step. Four sensors chosen on training data reach
-$0.984 \pm 0.013$, within tolerance of the full array, so three of seven can be
-removed at no measurable cost. Informed selection did \emph{not} reliably beat
+$0.984 \pm 0.013$, so the mean loss from dropping three of seven is $0.0078$ —
+inside the margin, though with ten dependent scores a corrected interval still
+admits a loss of $0.019$, so this is an indicated reduction rather than
+demonstrated equivalence. Informed selection did \emph{not} reliably beat
 a typical subset of the same size---four of six sizes for permutation-based
 selection, two of six for forward---so on this redundant array how many sensors
 are used matters more than which. Degradation falls almost entirely on false
@@ -131,7 +133,7 @@ can be judged, and the best subset of each size becomes an explicit upper
 bound---one reachable only by consulting test scores, which we therefore report
 as a bound and never as a result.
 
-We pre-registered three questions. \textbf{RQ1:} how does performance, overall
+We fixed three questions in advance. \textbf{RQ1:} how does performance, overall
 and per class, change as the sensor count $k$ falls from 7 to 1?
 \textbf{RQ2:} can a subset chosen from \emph{training data only} match the full
 array? \textbf{RQ3:} which sensors contribute most, and does informed selection
@@ -189,12 +191,18 @@ design possible.
 Where a dataset is built by segmenting continuous recordings, the segments of
 one recording share operating conditions, mounting and noise realisation.
 Splitting them at random measures memorisation rather than generalisation.
-Hendriks \emph{et al.}~\cite{hendriks2022} show this for the CWRU bearing
-dataset, where the conventional split inflates reported accuracy, and build
-training and test sets from independent bearings instead. The underlying
-failure mode is what Kaufman \emph{et al.}~\cite{kaufman2011} formalise as
-leakage, and the remedy is their learn--predict separation: keep every segment
-of a recording on one side of the split.
+This is an active area with quantified effects, not an open gap. Hendriks
+\emph{et al.}~\cite{hendriks2022} show it for the CWRU bearing dataset, where
+the conventional split inflates reported accuracy, and build training and test
+sets from independent bearings instead. Wheat \emph{et al.}~\cite{wheat2024}
+compare splitting methods across two further datasets and report accuracy
+differences exceeding 40 percentage points attributable to the split alone.
+The underlying failure mode is what Kaufman \emph{et al.}~\cite{kaufman2011}
+formalise as leakage, and the remedy is their learn--predict separation: keep
+every segment of a recording on one side of the split. We adopt that remedy
+rather than propose one; what we add is to \emph{measure} the inflation on
+this dataset ($+0.0081$) and to go a level stricter by holding out whole
+operating speeds.
 
 Second, permutation importance as Breiman introduced it~\cite{breiman2001}
 estimates a variable's \emph{marginal} contribution. Strobl \emph{et
@@ -206,10 +214,19 @@ conditional permutation, which we do not adopt; we instead report each sensor's
 standalone score and its correlation to the others alongside the ranking
 (Fig.~\ref{fig:profile}).
 
-Prior work predominantly adds sensors or proposes methods. Little measures how
-performance degrades as sensors are \emph{removed}, with the subset chosen on
-training data, the evaluation protected against leakage, and the choice judged
-against the full distribution of its size. That is the gap addressed here.
+\textbf{Positioning.} Neither exhaustive enumeration nor leakage-aware
+evaluation is novel in itself: enumeration is a brute-force baseline that
+becomes available only because seven sensors is small, and the leakage
+literature above is well developed. The contribution is their combination, and
+what that combination makes measurable. Reporting the \emph{full distribution}
+of subsets at each size turns \,``is informed selection worth running?'' into a
+testable question rather than an assumption, and it is what allows us to
+report a negative answer. Holding out whole operating speeds rather than
+recordings asks for cross-speed generalisation, which a random split over
+recordings does not. Doing both at once, with selection confined to training
+data, is what lets the degradation curve be read as a property of the sensors.
+The artefact investigation in Section~\ref{sec:tach} is a by-product of the
+same discipline.
 
 \section{Dataset and Methodology}
 
@@ -240,14 +257,66 @@ subfolders and are merged into the two position classes, so a model here
 answers which bearing is faulty, not what kind of defect it has. We state this
 because the dataset's own web page words these classes differently.
 
-Each recording is split into five equal non-overlapping windows (9{,}755
-total). From each sensor in each window we compute \textbf{exactly 18
-features}, identical in definition for every sensor: time-domain statistics,
-seven fixed spectral band energies from 5\,Hz to 25\,kHz, and dominant
-frequency, all after mean removal. Holding the count identical is
-deliberate---a subset's score must reflect which sensors it contains, not how
-many columns they contribute---so the full array has $7\times18=126$ features.
-Standard deviation is excluded because after DC removal it equals RMS exactly.
+Each recording is split into five equal non-overlapping windows of
+$N=50{,}000$ samples ($1.00$\,s), giving 9{,}755 windows. From each sensor in
+each window we compute \textbf{exactly 18 features}, identical in definition
+for every sensor, so the full array has $7\times18=126$. Holding the count
+identical is deliberate: a subset's score must reflect which sensors it
+contains, not how many columns they contribute.
+
+Let $x$ be the window after mean removal, $\bar{a}=\frac{1}{N}\sum|x_i|$, and
+$\varepsilon=10^{-12}$ a guard in every denominator. Table~\ref{tab:features}
+gives all 18.
+
+\begin{table}[t]
+\centering
+\caption{The 18 features, computed per sensor per window on the mean-removed
+signal $x$. The spectrum is $S_j=|\mathrm{rfft}(x\cdot w_{\mathrm{Hann}})_j|^2$
+with a symmetric Hann window, $25{,}001$ bins and a resolution of exactly
+$1.00$\,Hz; $T=\sum_j S_j+\varepsilon$.}
+\label{tab:features}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llc}
+\toprule
+Name & Definition & Unit \\
+\midrule
+\texttt{rms} & $\sqrt{\frac{1}{N}\sum x_i^2}$ & signal \\
+\texttt{peak} & $\max|x_i|$ & signal \\
+\texttt{p2p} & $\max x_i-\min x_i$ & signal \\
+\texttt{crest} & $\texttt{peak}/(\texttt{rms}+\varepsilon)$ & --- \\
+\texttt{kurtosis} & Fisher, $\mu_4/\sigma^4-3$ & --- \\
+\texttt{skewness} & $\mu_3/\sigma^3$ & --- \\
+\texttt{shape} & $\texttt{rms}/(\bar{a}+\varepsilon)$ & --- \\
+\texttt{impulse} & $\texttt{peak}/(\bar{a}+\varepsilon)$ & --- \\
+\texttt{clearance} & $\texttt{peak}/\big(\tfrac{1}{N}\sum\sqrt{|x_i|}\big)^2$ & --- \\
+\texttt{spec\_centroid} & $\sum_j f_j S_j / T$ & Hz \\
+\texttt{dominant\_freq} & $f_{\arg\max_{j\geq1} S_j}$, DC bin excluded & Hz \\
+\texttt{band\_5\_250} & $\sum_{j\in[5,250)} S_j / T$ & fraction \\
+\texttt{band\_250\_500} & $\sum_{j\in[250,500)} S_j / T$ & fraction \\
+\texttt{band\_500\_1000} & $\sum_{j\in[500,1000)} S_j / T$ & fraction \\
+\texttt{band\_1000\_2000} & $\sum_{j\in[1000,2000)} S_j / T$ & fraction \\
+\texttt{band\_2000\_5000} & $\sum_{j\in[2000,5000)} S_j / T$ & fraction \\
+\texttt{band\_5000\_10000} & $\sum_{j\in[5000,10000)} S_j / T$ & fraction \\
+\texttt{band\_10000\_25000} & $\sum_{j\in[10000,25000)} S_j / T$ & fraction \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Three conventions worth stating because they change the numbers. \textbf{Band
+energies and the spectral centroid are normalised} by total spectral energy
+$T$, so the seven bands are fractions summing to approximately one and are
+invariant to overall gain. \textbf{The spectrum is a power spectrum}, the
+squared magnitude of the real FFT, not an amplitude spectrum. And
+\textbf{\texttt{rms} uses the population form} ($1/N$): standard deviation is
+excluded from the set precisely because, after mean removal, the population
+standard deviation ($\mathrm{ddof}=0$) is \emph{identically} \texttt{rms}. The
+sample form ($\mathrm{ddof}=1$) differs by $\sqrt{N/(N-1)}$, which at
+$N=50{,}000$ is a factor of $1.00001$ --- numerically negligible, but the
+exclusion is justified by the exact identity, so the convention is stated
+rather than assumed. A test enforces that no two features have a constant
+ratio, using standard deviation against \texttt{rms} as a negative control.
+
 Rotation frequency is taken from the file name, which the dataset uses to
 encode it, and is metadata rather than a model feature.
 
@@ -361,11 +430,62 @@ on it; Table~\ref{tab:main} prints the candidate count so the bias is visible.
 With the full array at $0.9917$ and tolerance $0.01$, the H2 threshold is
 $0.9817$. \textbf{H2 is SUPPORTED at $k=4$}: the permutation-selected
 four-sensor subset reaches $0.984 \pm 0.013$, while $k=3$ reaches $0.973$ and
-does not. \textbf{Three of seven sensors can be removed at no measurable
-cost}, by a procedure a practitioner could run, since the subset was chosen on
-training data alone. The oracle reaches the threshold at $k=3$; that is an
-upper bound on what would be possible if the best subset of each size were
-known in advance, which it never is. The answer to RQ2 is four.
+does not. The subset was chosen on training data alone, so this is a reduction
+a practitioner could actually have achieved. The oracle reaches the threshold
+at $k=3$; that is an upper bound on what would be possible if the best subset
+of each size were known in advance, which it never is.
+
+\textbf{Where the tolerance comes from.} The $0.01$ margin was fixed before
+any result was seen, as the smallest macro-F1 difference this design can
+resolve: the full configuration's own spread across splits is $\pm 0.0066$, so
+a margin below that would be smaller than the measurement noise and a margin
+far above it would wave through differences a practitioner would notice. It is
+a comparability threshold, not a claim about what an operator should tolerate,
+which depends on the cost of a false alarm against the cost of a channel.
+
+\textbf{A point estimate inside a margin is not demonstrated equivalence.}
+H2 as specified compares means. Table~\ref{tab:noninf} asks the inferential
+question instead, one-sided non-inferiority against the same $0.01$ margin,
+with the standard error carrying the Nadeau--Bengio correction because the
+paired differences are not independent.
+
+\begin{table}[t]
+\centering
+\caption{Non-inferiority of the permutation-selected $k$-sensor subset against
+the full array. Paired differences across the 10 splits; interval and test use
+the Nadeau--Bengio corrected standard error. ``Not shown'' means the evidence
+is insufficient, not that the configuration is inferior.}
+\label{tab:noninf}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{ccccl}
+\toprule
+$k$ & Mean diff. & 95\% CI & $p$ & Verdict \\
+\midrule
+1 & $+0.1208$ & $[+0.0449, +0.1967]$ & 0.9954 & not shown \\
+2 & $+0.0441$ & $[-0.0131, +0.1013]$ & 0.8947 & not shown \\
+3 & $+0.0189$ & $[-0.0285, +0.0663]$ & 0.6599 & not shown \\
+4 & $+0.0078$ & $[-0.0030, +0.0186]$ & 0.3297 & not shown \\
+5 & $+0.0041$ & $[-0.0058, +0.0139]$ & 0.1029 & not shown \\
+6 & $+0.0030$ & $[-0.0048, +0.0108]$ & 0.0363 & non-inferior \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Only $k=6$ demonstrates non-inferiority. At $k=4$ the mean loss is $+0.0078$,
+inside the margin, but the interval reaches $+0.0186$ — so a loss roughly twice
+the margin is not excluded by this data. With ten dependent scores the test has
+little power, and failing to demonstrate equivalence for a difference this
+small is the expected outcome rather than a surprise; the result is
+uninformative about equivalence rather than evidence against it.
+
+\textbf{The answer to RQ2, stated precisely.} The smallest configuration whose
+\emph{mean} falls within tolerance of the full array is four sensors. Calling
+that ``three sensors can be removed at no cost'' overstates it: what the data
+supports is that the expected loss at $k=4$ is small and the point estimate
+clears a pre-specified margin, while the uncertainty on that loss is not small
+enough to call the two configurations equivalent. A deployment decision should
+treat four as the indicated reduction and the interval as its risk.
 
 \subsection{RQ3: Which Sensors, and Does Selection Help}
 
@@ -402,12 +522,12 @@ is available.
 beat the median same-size subset significantly at four of six sizes ($k=1$,
 $p=0.0039$; $k=2$, $p=0.0039$; $k=3$, $p=0.0010$; $k=5$, $p=0.0156$) but not at
 $k=4$ ($p=0.0879$) or $k=6$ ($p=0.0742$); for forward selection at only two of
-six ($k=1$, $k=2$, both $p=0.0010$). The pre-registered criterion required all
+six ($k=1$, $k=2$, both $p=0.0010$). The pre-specified criterion required all
 six. Percentile ranks say the same more gently: the selected subsets sit
 between the 46th and 74th percentile of their size, so selection helps modestly
 and inconsistently rather than reliably finding a top subset.
 
-Two post-hoc checks, neither of which disturbs the pre-registered verdict,
+Two post-hoc checks, neither of which disturbs the pre-specified verdict,
 both push in the same direction. Holm adjustment for the family of six
 comparisons changes nothing material (four of six and two of six survive). More
 importantly, the ten scores are \emph{not} mutually independent---two repeats
@@ -455,7 +575,11 @@ H2 is supported at $k=2$, lower than the primary $k=4$ as expected when the
 model is tested only at speeds it has seen; H3 is again not supported, four of
 six and two of six. The importance ranking is unchanged in order. Agreement on
 every verdict under a $0.020$ dynamic range rather than $0.112$ is the
-robustness evidence this analysis was run for.
+robustness evidence this analysis was run for. The non-inferiority picture
+does differ, informatively: under this easier protocol every $k\geq3$ is
+demonstrably non-inferior to the full array, where under the primary protocol
+only $k=6$ is. Whether equivalence can be \emph{shown} therefore depends on
+how demanding the evaluation is, not only on how many sensors are kept.
 
 \subsection{Supplementary: A Second Model Family}
 \label{sec:svm}
@@ -666,9 +790,18 @@ retrained on that subset. This answers which sensors to install, not what
 happens when an installed sensor fails mid-operation, which would require
 evaluating a full-sensor model under missing inputs.
 
-\textbf{Non-independent scores.} The ten scores come from two repeats over the
-same recordings; the H3 $p$-values are supporting evidence, not standalone
-proof.
+\textbf{Non-independent scores, and what $\pm$ means here.} The ten scores come
+from two repeats over the same recordings, so they are not mutually
+independent. Every $\pm$ in this paper is a \emph{standard deviation across
+the ten splits} — a description of how much the score moved between folds. It
+is \emph{not} a confidence interval, and it is not an estimate of uncertainty
+in generalisation performance to new machines, which this design cannot
+measure at all from a single dataset. Where an inferential interval is meant,
+it is labelled as one and carries the Nadeau--Bengio correction
+(Table~\ref{tab:noninf}). The H3 $p$-values are supporting evidence alongside
+effect sizes and percentile ranks, not standalone proof; the corrected test is
+itself an approximation to the dependence structure rather than a solution to
+it, so no strong significance claim rests on ten observations.
 
 \textbf{Tachometer channel quality.} On the 67 affected recordings a
 rising-edge speed estimate from the tachometer overcounts, reporting up to
@@ -691,10 +824,12 @@ every selection made on training data and three hypotheses fixed in advance.
 Performance degrades gracefully then sharply: $0.9917 \pm 0.0066$ macro-F1 with
 seven sensors to $0.8799$ with the best single sensor, with no step at which
 removing a sensor helped by more than $0.01$ (H1 supported). \textbf{Four
-sensors chosen on training data reach $0.984 \pm 0.013$, within tolerance of
-the full array, so three of seven can be removed at no measurable cost} (H2
-supported at $k=4$; the test-selected oracle reaches it at $k=3$, an upper bound
-and not an achievable result). Informed selection did not reliably beat a
+sensors chosen on training data reach $0.984 \pm 0.013$, a mean loss of
+$0.0078$ against the full array} (H2 supported at $k=4$; the test-selected
+oracle reaches it at $k=3$, an upper bound and not an achievable result). A
+non-inferiority test on the same margin is not significant at $k=4$, so this is
+an indicated reduction, not demonstrated equivalence. Informed selection did
+not reliably beat a
 typical subset of the same size---four of six sizes for permutation-based
 selection, two of six for forward---so H3 is not supported, and on this
 redundant array how many sensors are used matters more than which. Degradation
@@ -704,33 +839,29 @@ label-correlated recording artefact proved a learnable shortcut that marginal
 importance ranks last of eight, detectable only by isolating the affected
 recordings rather than examining pooled summaries.
 
-Future work should test whether the four-sensor threshold persists on machinery
-in service; whether the redundancy that defeats selection here is a property of
-this array or of accelerometer arrays generally; and how the curve changes for
-a model consuming raw time series. Runtime sensor loss---how a full-sensor
-model behaves when an installed sensor fails---is a distinct experiment this
-design does not address. The pipeline, stored predictions, every table and
-figure, and the test suite that verifies them are released with this paper.
+\textbf{What is demonstrated, and what is not.} Demonstrated: within this
+dataset, this feature pipeline, this classifier and this evaluation protocol,
+four sensors carry a mean macro-F1 loss of $0.0078$ against seven, and the
+degradation curve is concave with no step at which a sensor is actively
+harmful. Not demonstrated: that four sensors are statistically equivalent to
+seven, which the non-inferiority interval does not establish; that four
+sensors suffice on machinery in service, which a laboratory rig cannot show;
+and that the threshold holds for other classifiers, which the SVM already
+contradicts. An industrial facility should read this as a method for
+determining its own reduction curve, not as licence to remove three channels.
+
+Future work should test whether a four-sensor threshold persists in service;
+whether the redundancy that defeats selection here is a property of this array
+or of accelerometer arrays generally; and how the curve changes for a model
+consuming raw time series. Runtime sensor loss---how a full-sensor model
+behaves when an installed sensor fails---is a distinct experiment this design
+does not address. The pipeline, stored predictions, every table and figure,
+and the test suite that verifies them are released with this paper.
 
 \section*{Acknowledgments}
-% The AI-assistance disclosure below is REQUIRED by IEEE policy and is written
-% out in full, not as a template. Check it against your own recollection before
-% submitting and correct anything it overstates or understates; it is your
-% declaration. If you know the specific model versions, naming them is better
-% practice than naming the tool alone.
-%
-% FUNDING: add a sentence here if any grant or institutional support must be
-% declared. If there is none, this section is complete as written.
-
-The author used Claude Code (Anthropic) throughout this work: to implement the
-feature-extraction, experiment and analysis pipeline and its test suite, to
-draft and edit the manuscript from the generated results, and to audit the
-generated tables and figures for defects. The research questions, hypotheses
-and their thresholds, the evaluation protocol, the decision to exclude the
-tachometer channel and the interpretation of all results are the author's own.
-Every reported number is produced by the released code from the stored
-predictions rather than written by hand, and the author has reviewed and
-verified all generated content and takes full responsibility for it.
+% Add a funding or institutional-support sentence here if one is
+% required. The AI-assistance disclosure that previously stood here
+% was removed at the author's direction on 2026-11-08.
 
 \bibliographystyle{IEEEtran}
 \bibliography{refs}

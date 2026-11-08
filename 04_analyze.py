@@ -184,6 +184,65 @@ def corrected_resampled_t(selected: list[float],
     return float(stats_t.sf(t_stat, df=n - 1))
 
 
+def non_inferiority(paired_full: list[float], paired_k: list[float],
+                    margin: float) -> dict[str, float]:
+    """Is a reduced configuration non-inferior to the full one?
+
+    H2 as pre-specified asks only whether a MEAN falls inside a tolerance.
+    That is a comparison of point estimates: it says nothing about how
+    confident we are, and with 10 scores the uncertainty is not negligible.
+    This adds the inferential version of the same question.
+
+    The test is one-sided non-inferiority, which is the claim actually being
+    made ("dropping to k sensors costs less than the margin"):
+
+        H0: mean(full - k) >= margin      the loss is at least the margin
+        H1: mean(full - k) <  margin      the loss is smaller than the margin
+
+    Rejecting H0 is the positive result. Note this is NOT the same as failing
+    to reject a difference, which is what a conventional test would give and
+    which can never establish equivalence.
+
+    The standard error uses the Nadeau-Bengio correction, because the paired
+    differences come from repeated k-fold and are not independent. Treating
+    them as independent would make the interval too narrow and the test too
+    permissive, which is the opposite of conservative for a claim of this
+    shape. The interval is therefore wider than a naive one, deliberately.
+
+    Args:
+        paired_full: Per-split score of the full configuration.
+        paired_k: Per-split score of the reduced configuration, same order.
+        margin: The non-inferiority margin, in macro-F1 points.
+
+    Returns:
+        Mean difference, corrected standard error, the two-sided 95%
+        interval, the one-sided p-value and the verdict.
+    """
+    diff = np.asarray(paired_full, dtype=float) - np.asarray(paired_k,
+                                                             dtype=float)
+    n = diff.size
+    mean_diff = float(np.mean(diff))
+    ratio = 1.0 / (N_SPLITS - 1)
+    variance = float(np.var(diff, ddof=1))
+    stderr = float(np.sqrt((1.0 / n + ratio) * variance))
+
+    if stderr <= 0:
+        return {"mean_diff": mean_diff, "stderr": 0.0, "ci_low": mean_diff,
+                "ci_high": mean_diff, "p": 0.0 if mean_diff < margin else 1.0,
+                "non_inferior": float(mean_diff < margin)}
+
+    half = float(stats_t.ppf(0.975, df=n - 1)) * stderr
+    p_value = float(stats_t.cdf((mean_diff - margin) / stderr, df=n - 1))
+    return {
+        "mean_diff": mean_diff,
+        "stderr": stderr,
+        "ci_low": mean_diff - half,
+        "ci_high": mean_diff + half,
+        "p": p_value,
+        "non_inferior": float(p_value < ALPHA),
+    }
+
+
 def error_rates(y_true: NDArray[np.int64],
                 y_pred: NDArray[np.int64]) -> dict[str, float]:
     """Detection error rates, as defined in Section 11.
@@ -604,7 +663,8 @@ def write_latex_table(table: pd.DataFrame, path: Path) -> None:
 # ----------------------------------------------------------------- hypotheses
 def write_hypotheses(table: pd.DataFrame, curves: dict, full_mean: float,
                      full_sd: float, n_splits: int, split_mode: str,
-                     path: Path) -> int | None:
+                     path: Path, wide: pd.DataFrame,
+                     selection: dict) -> int | None:
     """Write the H1, H2 and H3 verdicts.
 
     Every threshold is restated inline so the file stands on its own without
@@ -716,6 +776,48 @@ def write_hypotheses(table: pd.DataFrame, curves: dict, full_mean: float,
     out.append(f"    VERDICT: {'SUPPORTED' if fair_k else 'NOT SUPPORTED'} "
                "(on the fair, permutation-selected result)")
     out.append("    The FAIR number is the answer to the research question. The")
+    out.append("    oracle number only shows what would be possible if the")
+    out.append("    best subset were known in advance, which it never is.")
+    out.append("")
+    out.append("    SUPPLEMENTARY: NON-INFERIORITY, the inferential version")
+    out.append("    H2 above compares POINT ESTIMATES against the tolerance.")
+    out.append("    That is what was pre-specified, and the verdict stands on")
+    out.append("    it. But a mean inside a margin is not the same claim as")
+    out.append("    'demonstrably within the margin', so the test below asks")
+    out.append("    the inferential question directly, for each k:")
+    out.append("")
+    out.append("      H0: mean(full - k) >= margin   (the loss is at least")
+    out.append("                                      the margin)")
+    out.append("      H1: mean(full - k) <  margin   (the loss is smaller)")
+    out.append("")
+    out.append(f"    margin = {TOLERANCE}, one-sided, alpha = {ALPHA}.")
+    out.append("    The standard error carries the Nadeau-Bengio correction,")
+    out.append("    because the paired differences come from repeated k-fold")
+    out.append("    and are NOT independent; the interval is therefore wider")
+    out.append("    than a naive one, deliberately.")
+    out.append("")
+    full_name_ = subset_name(SENSORS)
+    out.append("    Permutation-selected, against the full configuration:")
+    out.append("      k   mean diff   95% CI (corrected)      p      verdict")
+    for k in range(1, len(SENSORS)):
+        picked_name = [selected_subset(selection[sp], "perm", k)
+                       for sp in wide.index]
+        paired_k = [float(wide.at[sp, nm])
+                    for sp, nm in zip(wide.index, picked_name)]
+        paired_full = [float(wide.at[sp, full_name_]) for sp in wide.index]
+        r = non_inferiority(paired_full, paired_k, TOLERANCE)
+        verdict = "NON-INFERIOR" if r["non_inferior"] else "not shown"
+        out.append(f"      {k}   {r['mean_diff']:+.4f}     "
+                   f"[{r['ci_low']:+.4f}, {r['ci_high']:+.4f}]   "
+                   f"{r['p']:.4f}   {verdict}")
+    out.append("")
+    out.append("    READ THIS CAREFULLY: 'not shown' does NOT mean the")
+    out.append("    configuration is inferior. With n = 10 dependent scores")
+    out.append("    the test has little power, so failing to demonstrate")
+    out.append("    non-inferiority is the expected outcome for a difference")
+    out.append("    this small. The honest summary is that the point estimate")
+    out.append("    clears the tolerance while the evidence is not strong")
+    out.append("    enough to call it demonstrated equivalence.")
     out.append("    oracle number only shows what would be possible if the best")
     out.append("    subset were known in advance, which it never is.")
     out.append("")
@@ -1270,7 +1372,7 @@ def analyse(res_dir: Path, split_mode: str, expect_full_run: bool = False) -> di
     write_latex_table(table, out_tables / "table_main.tex")
 
     fair_k = write_hypotheses(table, curves, full_mean, full_sd, len(splits),
-                              split_mode, out_tables / "hypotheses.txt")
+                              split_mode, out_tables / "hypotheses.txt", wide, selection)
 
     ks = [int(k) for k in table["k"]]
     recall_rows, error_rows = [], []
