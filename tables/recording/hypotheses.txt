@@ -69,22 +69,34 @@ H2: some k < 7 reaches mean macro-F1 >= (full - TOLERANCE) = 0.9873.
     and are NOT independent; the interval is therefore wider
     than a naive one, deliberately.
 
-    Permutation-selected, against the full configuration:
-      k   mean diff   95% CI (corrected)      p      verdict
-      1   +0.0217     [+0.0097, +0.0336]   0.9727   not shown
-      2   +0.0053     [-0.0036, +0.0141]   0.1285   not shown
-      3   +0.0002     [-0.0094, +0.0098]   0.0235   NON-INFERIOR
-      4   +0.0022     [-0.0032, +0.0076]   0.0049   NON-INFERIOR
-      5   +0.0012     [-0.0012, +0.0037]   0.0000   NON-INFERIOR
-      6   +0.0002     [-0.0011, +0.0015]   0.0000   NON-INFERIOR
+    Permutation-selected, against the full configuration.
+    The six tests form one family, because the table is read
+    to find which k qualifies; the Holm column is therefore
+    the one to judge a confirmatory claim on.
+      k   mean diff   95% CI (corrected)    raw p   Holm p   verdict
+      1   +0.0217     [+0.0097, +0.0336]   0.9727   0.9727   not shown
+      2   +0.0053     [-0.0036, +0.0141]   0.1285   0.2569   not shown
+      3   +0.0002     [-0.0094, +0.0098]   0.0235   0.0706   not shown
+      4   +0.0022     [-0.0032, +0.0076]   0.0049   0.0195   NON-INFERIOR
+      5   +0.0012     [-0.0012, +0.0037]   0.0000   0.0000   NON-INFERIOR
+      6   +0.0002     [-0.0011, +0.0015]   0.0000   0.0000   NON-INFERIOR
 
-    READ THIS CAREFULLY: 'not shown' does NOT mean the
+    4/6 significant on raw p; 3/6 after Holm.
+
+    READ THIS CAREFULLY. 'Not shown' does NOT mean the
     configuration is inferior. With n = 10 dependent scores
     the test has little power, so failing to demonstrate
     non-inferiority is the expected outcome for a difference
-    this small. The honest summary is that the point estimate
-    clears the tolerance while the evidence is not strong
-    enough to call it demonstrated equivalence.
+    this small: the result does not settle equivalence either
+    way, rather than arguing against it. The honest summary
+    is that the point estimate clears the tolerance while the
+    evidence does not establish equivalence.
+
+    These six tests are EXPLORATORY. H2 as pre-specified is a
+    comparison of means and its verdict is unchanged by any
+    of this. No k should be presented as a confirmed
+    non-inferior configuration on the strength of an
+    unadjusted p drawn from a family of six.
     oracle number only shows what would be possible if the best
     subset were known in advance, which it never is.
 
