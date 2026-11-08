@@ -16,24 +16,26 @@
 % have not copied from one of those. If a number here disagrees with the
 % generated file, the generated file is right and this one is stale.
 %
-% LENGTH: 8 PAGES, verified by compiling with MiKTeX on 2026-11-08. Zero
-% Overfull boxes, no undefined references. All eight pages are well filled
-% (797-978 words each).
+% LENGTH: 9 PAGES, verified by compiling with MiKTeX on 2026-11-08. Zero
+% Overfull boxes, no undefined references, no font warnings. Pages 1-8 are
+% full (770-1040 words each); page 9 carries only the last four references.
 %
-% IT GREW FROM 7 after a review pass. The additions, in order of how hard
-% they are to remove:
-%   1. Table II, the non-inferiority analysis, and the paragraph qualifying
-%      H2. DO NOT CUT: without it the paper claims equivalence it has not
-%      demonstrated. This is the change that most improves the paper.
-%   2. Table I, the full feature specification. Cuttable to a URL pointing at
-%      the repository if a venue is strict, but reproducibility suffers.
-%   3. The tolerance justification, the demonstrated-vs-not paragraph in the
-%      conclusion, and the expanded non-independence limitation. All short
-%      and all corrective; cutting them reintroduces overclaims.
+% IT HAS GROWN 6 -> 7 -> 8 -> 9 across three review rounds, because each
+% round added a correction rather than an embellishment. Two trimming passes
+% recovered about 900 words and did NOT recover the page, because the content
+% is now genuinely more than a 6-page conference format holds.
 %
-% TO REACH 6 PAGES, if a venue hard-caps there: drop Section V-F (the SVM
-% subsection) and Table I, and shorten the "Model dependence" limitation.
-% That is roughly two pages and loses one real result plus the feature spec.
+% THE REAL DECISION IS THE VENUE, not further trimming:
+%   - A journal or an 8-10 page conference: submit as is.
+%   - An 8-page cap: one more pass of the kind already done will reach it;
+%     page 9 holds 91 words.
+%   - A hard 6-page cap: drop Section V-F (the SVM study) and Table I (the
+%     feature specification). That is roughly two pages and loses one real
+%     result plus the reproducibility detail a reviewer specifically asked
+%     for, so prefer a different venue if you can.
+%
+% DO NOT CUT, in any version: Table III and the non-inferiority discussion.
+% Without them the paper claims an equivalence it has not demonstrated.
 %
 % FIGURES: 2, both single-column. fig7_sensor_profile replaced the old fig2
 % and fig6b, carrying marginal importance, standalone score and correlation in
@@ -217,16 +219,12 @@ standalone score and its correlation to the others alongside the ranking
 \textbf{Positioning.} Neither exhaustive enumeration nor leakage-aware
 evaluation is novel in itself: enumeration is a brute-force baseline that
 becomes available only because seven sensors is small, and the leakage
-literature above is well developed. The contribution is their combination, and
-what that combination makes measurable. Reporting the \emph{full distribution}
+literature above is well developed. The contribution is their combination and what it makes measurable. Reporting the \emph{full distribution}
 of subsets at each size turns \,``is informed selection worth running?'' into a
 testable question rather than an assumption, and it is what allows us to
-report a negative answer. Holding out whole operating speeds rather than
-recordings asks for cross-speed generalisation, which a random split over
-recordings does not. Doing both at once, with selection confined to training
-data, is what lets the degradation curve be read as a property of the sensors.
-The artefact investigation in Section~\ref{sec:tach} is a by-product of the
-same discipline.
+report a negative answer. Holding out whole operating speeds asks for cross-speed generalisation, which
+a split over recordings does not. Doing both, with selection confined to
+training data, is what lets the curve be read as a property of the sensors.
 
 \section{Dataset and Methodology}
 
@@ -273,7 +271,7 @@ gives all 18.
 \caption{The 18 features, computed per sensor per window on the mean-removed
 signal $x$. The spectrum is $S_j=|\mathrm{rfft}(x\cdot w_{\mathrm{Hann}})_j|^2$
 with a symmetric Hann window, $25{,}001$ bins and a resolution of exactly
-$1.00$\,Hz; $T=\sum_j S_j+\varepsilon$.}
+$1.00$\,Hz; $T=\sum_j S_j+\varepsilon$. The seven band edges $(\ell,h)$ are 5--250, 250--500, 500--1000, 1000--2000, 2000--5000, 5000--10000 and 10000--25000\,Hz.}
 \label{tab:features}
 \footnotesize
 \setlength{\tabcolsep}{3pt}
@@ -285,20 +283,14 @@ Name & Definition & Unit \\
 \texttt{peak} & $\max|x_i|$ & signal \\
 \texttt{p2p} & $\max x_i-\min x_i$ & signal \\
 \texttt{crest} & $\texttt{peak}/(\texttt{rms}+\varepsilon)$ & --- \\
-\texttt{kurtosis} & Fisher, $\mu_4/\sigma^4-3$ & --- \\
-\texttt{skewness} & $\mu_3/\sigma^3$ & --- \\
+\texttt{kurtosis} & Fisher, $m_4/m_2^2-3$, biased & --- \\
+\texttt{skewness} & $m_3/m_2^{3/2}$, biased & --- \\
 \texttt{shape} & $\texttt{rms}/(\bar{a}+\varepsilon)$ & --- \\
 \texttt{impulse} & $\texttt{peak}/(\bar{a}+\varepsilon)$ & --- \\
 \texttt{clearance} & $\texttt{peak}/\big(\tfrac{1}{N}\sum\sqrt{|x_i|}\big)^2$ & --- \\
 \texttt{spec\_centroid} & $\sum_j f_j S_j / T$ & Hz \\
 \texttt{dominant\_freq} & $f_{\arg\max_{j\geq1} S_j}$, DC bin excluded & Hz \\
-\texttt{band\_5\_250} & $\sum_{j\in[5,250)} S_j / T$ & fraction \\
-\texttt{band\_250\_500} & $\sum_{j\in[250,500)} S_j / T$ & fraction \\
-\texttt{band\_500\_1000} & $\sum_{j\in[500,1000)} S_j / T$ & fraction \\
-\texttt{band\_1000\_2000} & $\sum_{j\in[1000,2000)} S_j / T$ & fraction \\
-\texttt{band\_2000\_5000} & $\sum_{j\in[2000,5000)} S_j / T$ & fraction \\
-\texttt{band\_5000\_10000} & $\sum_{j\in[5000,10000)} S_j / T$ & fraction \\
-\texttt{band\_10000\_25000} & $\sum_{j\in[10000,25000)} S_j / T$ & fraction \\
+\texttt{band\_$\ell$\_$h$} & $\sum_{j\in[\ell,h)} S_j / T$, 7 bands & fraction \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -316,6 +308,13 @@ $N=50{,}000$ is a factor of $1.00001$ --- numerically negligible, but the
 exclusion is justified by the exact identity, so the convention is stated
 rather than assumed. A test enforces that no two features have a constant
 ratio, using standard deviation against \texttt{rms} as a negative control.
+
+Kurtosis and skewness are \texttt{scipy.stats.kurtosis} and
+\texttt{scipy.stats.skew} at their defaults: \emph{biased} (population)
+moments $m_r=\frac{1}{N}\sum x_i^r$, Fisher's kurtosis, 0 for a Gaussian. The
+released environment pins SciPy 1.18.1, NumPy 2.5.3 and scikit-learn
+1.9.1, because moment conventions are library-specific and a
+reimplementation using unbiased moments would not reproduce these columns.
 
 Rotation frequency is taken from the file name, which the dataset uses to
 encode it, and is metadata rather than a model feature.
@@ -426,6 +425,7 @@ that bias rather than a harmful sensor, which is why the verdict does not rest
 on it; Table~\ref{tab:main} prints the candidate count so the bias is visible.
 
 \subsection{RQ2: How Few Sensors Suffice}
+\label{sec:rq2}
 
 With the full array at $0.9917$ and tolerance $0.01$, the H2 threshold is
 $0.9817$. \textbf{H2 is SUPPORTED at $k=4$}: the permutation-selected
@@ -437,9 +437,8 @@ of each size were known in advance, which it never is.
 
 \textbf{Where the tolerance comes from.} The $0.01$ margin was fixed before
 any result was seen, as the smallest macro-F1 difference this design can
-resolve: the full configuration's own spread across splits is $\pm 0.0066$, so
-a margin below that would be smaller than the measurement noise and a margin
-far above it would wave through differences a practitioner would notice. It is
+resolve: the full configuration's own spread across splits is $\pm 0.0066$, so a
+smaller margin would sit inside the measurement noise. It is
 a comparability threshold, not a claim about what an operator should tolerate,
 which depends on the cost of a false alarm against the cost of a channel.
 
@@ -453,39 +452,44 @@ paired differences are not independent.
 \centering
 \caption{Non-inferiority of the permutation-selected $k$-sensor subset against
 the full array. Paired differences across the 10 splits; interval and test use
-the Nadeau--Bengio corrected standard error. ``Not shown'' means the evidence
-is insufficient, not that the configuration is inferior.}
+the Nadeau--Bengio corrected standard error. The six tests form one family, so
+the Holm-adjusted column is the one a confirmatory claim must rest on. ``Not
+shown'' means the evidence is insufficient, not that the configuration is
+inferior.}
 \label{tab:noninf}
 \footnotesize
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{ccccl}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{ccccccl}
 \toprule
-$k$ & Mean diff. & 95\% CI & $p$ & Verdict \\
+$k$ & Mean diff. & 95\% CI & Raw $p$ & Holm $p$ & Verdict \\
 \midrule
-1 & $+0.1208$ & $[+0.0449, +0.1967]$ & 0.9954 & not shown \\
-2 & $+0.0441$ & $[-0.0131, +0.1013]$ & 0.8947 & not shown \\
-3 & $+0.0189$ & $[-0.0285, +0.0663]$ & 0.6599 & not shown \\
-4 & $+0.0078$ & $[-0.0030, +0.0186]$ & 0.3297 & not shown \\
-5 & $+0.0041$ & $[-0.0058, +0.0139]$ & 0.1029 & not shown \\
-6 & $+0.0030$ & $[-0.0048, +0.0108]$ & 0.0363 & non-inferior \\
+1 & $+0.1208$ & $[+0.0449, +0.1967]$ & 0.9954 & 1.0000 & not shown \\
+2 & $+0.0441$ & $[-0.0131, +0.1013]$ & 0.8947 & 1.0000 & not shown \\
+3 & $+0.0189$ & $[-0.0285, +0.0663]$ & 0.6599 & 1.0000 & not shown \\
+4 & $+0.0078$ & $[-0.0030, +0.0186]$ & 0.3297 & 1.0000 & not shown \\
+5 & $+0.0041$ & $[-0.0058, +0.0139]$ & 0.1029 & 0.5147 & not shown \\
+6 & $+0.0030$ & $[-0.0048, +0.0108]$ & 0.0363 & 0.2178 & not shown \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Only $k=6$ demonstrates non-inferiority. At $k=4$ the mean loss is $+0.0078$,
-inside the margin, but the interval reaches $+0.0186$ — so a loss roughly twice
-the margin is not excluded by this data. With ten dependent scores the test has
-little power, and failing to demonstrate equivalence for a difference this
-small is the expected outcome rather than a surprise; the result is
-uninformative about equivalence rather than evidence against it.
+\textbf{No configuration demonstrates non-inferiority under this protocol.}
+On raw $p$, only $k=6$ would qualify. But the six tests are scanned precisely
+to find which $k$ qualifies, which makes them one family; Holm adjustment
+takes the smallest to $0.0363\times6=0.2178$ and nothing survives. These six
+tests are therefore \textbf{exploratory}, and we present no $k$ as a confirmed
+non-inferior configuration.
 
-\textbf{The answer to RQ2, stated precisely.} The smallest configuration whose
-\emph{mean} falls within tolerance of the full array is four sensors. Calling
-that ``three sensors can be removed at no cost'' overstates it: what the data
-supports is that the expected loss at $k=4$ is small and the point estimate
-clears a pre-specified margin, while the uncertainty on that loss is not small
-enough to call the two configurations equivalent. A deployment decision should
-treat four as the indicated reduction and the interval as its risk.
+At $k=4$ the mean loss is $+0.0078$ but the interval reaches $+0.0186$, so a
+loss twice the margin is not excluded. With ten dependent scores the test has
+little power, so this does not settle equivalence either way rather than being evidence
+against it. H2 as pre-specified compares means and its verdict is unchanged by
+any of this.
+
+\textbf{The answer to RQ2.} The smallest configuration whose \emph{mean}
+falls within tolerance is four sensors, but ``three sensors can be removed
+at no cost'' overstates that: four is the indicated reduction and the
+interval in Table~\ref{tab:noninf} is its risk.
 
 \subsection{RQ3: Which Sensors, and Does Selection Help}
 
@@ -576,10 +580,12 @@ model is tested only at speeds it has seen; H3 is again not supported, four of
 six and two of six. The importance ranking is unchanged in order. Agreement on
 every verdict under a $0.020$ dynamic range rather than $0.112$ is the
 robustness evidence this analysis was run for. The non-inferiority picture
-does differ, informatively: under this easier protocol every $k\geq3$ is
-demonstrably non-inferior to the full array, where under the primary protocol
-only $k=6$ is. Whether equivalence can be \emph{shown} therefore depends on
-how demanding the evaluation is, not only on how many sensors are kept.
+does differ, informatively: under this easier protocol $k=4$, $5$ and $6$
+survive Holm adjustment across the same family of six tests, where under the
+primary protocol none does. Whether equivalence can be \emph{shown} therefore
+depends on how demanding the evaluation is, not only on how many sensors are
+kept --- which is itself a reason to be wary of reduction thresholds reported
+under recording-level splits.
 
 \subsection{Supplementary: A Second Model Family}
 \label{sec:svm}
@@ -602,13 +608,12 @@ and the same sharp widening of spread at small $k$ ($\pm0.005$ to $\pm0.116$).
 \textbf{H2, however, is met at $k=5$ rather than $k=4$}: the four-sensor subset
 reaches $0.9652$ against a threshold of $0.9687$ and falls just short.
 
-That difference is the honest answer to the question. The qualitative
-conclusions of this paper---that performance degrades gracefully then sharply,
-that no sensor is actively harmful, and that a substantial reduction is
-available---are not artefacts of the forest. The precise number of sensors that
-can be dropped \emph{is} model-dependent, and a practitioner transferring the
-$k=4$ figure to a different classifier should re-derive it. We also note that
-under the SVM the six-sensor subset marginally exceeds the full array
+The qualitative conclusions---graceful-then-sharp degradation, no actively
+harmful sensor, a substantial reduction available---are therefore not
+artefacts of the forest, while the precise number that can be dropped
+\emph{is} model-dependent: a practitioner transferring the $k=4$ figure to
+another classifier should re-derive it. Under the SVM the six-sensor subset
+marginally exceeds the full array
 ($0.9822$ against $0.9787$), a gap well inside the $0.01$ tolerance and
 consistent with the full array's larger variance under this model
 ($\pm0.026$).
@@ -681,26 +686,29 @@ disappears ($+0.0016$ and $+0.0028$, both at or near $1.0$ on affected and
 unaffected alike), so the artefact did not distort the full-array results,
 which is why primary and supplementary analyses agree on every verdict.
 
-\textbf{The methodological point.} Our own first reading was wrong. Judging
-exploitation from \emph{pooled} per-class recall, the tachometer's elevated
-bearing-class recall ($+0.221$) was indistinguishable from the control's
-($+0.246$). That observation is correct and the conclusion drawn from it was
-still wrong: pooling averaged 670 affected windows with 10{,}040 unaffected and
-destroyed the contrast that mattered. Where a suspected artefact is confined to
-an identifiable subset of recordings, that subset must be isolated before any
-comparison is informative---and a near-zero marginal importance score is not
-evidence that a channel is safe to include.
+\textbf{The methodological point.} Our own first reading was wrong. From
+\emph{pooled} per-class recall the tachometer's elevated bearing-class recall
+($+0.221$) was indistinguishable from the control's ($+0.246$) --- a correct
+observation from which we drew a wrong conclusion, because pooling averaged
+670 affected windows with 10{,}040 unaffected and destroyed the contrast.
+Where a suspected artefact is confined to an identifiable subset, that subset
+must be isolated before any comparison is informative, and a near-zero
+marginal importance score is not evidence that a channel is safe to include.
 
 \section{Discussion}
 
 \textbf{Instrumentation.} On this rig and protocol, four well-chosen sensors
-are as good as seven and the marginal value of the fifth, sixth and seventh is
-within measurement noise. The decision is therefore not a smooth cost/accuracy
-trade-off but a threshold: above roughly four channels, more buy almost
-nothing; below it, cost rises steeply, two sensors to one costing more than
-seven to four. If the budget permits one, \emph{which} becomes the dominant
-design decision---the spread across single sensors ($\pm0.077$) is more than
-ten times that across six-sensor subsets ($\pm0.005$).
+reach a mean macro-F1 within the pre-specified comparability margin of the
+seven-sensor configuration, though as Section~\ref{sec:rq2} shows the
+available evidence does not establish non-inferiority. Read as a cost curve
+rather than an equivalence claim, the shape is still the actionable part: the
+decision is not a smooth cost/accuracy trade-off but a threshold. Above
+roughly four channels the mean gain from each additional sensor is smaller
+than the spread between splits; below it, cost rises steeply, two sensors to
+one costing more than seven to four. If the budget permits one, \emph{which}
+becomes the dominant design decision---the spread across single sensors
+($\pm0.077$) is more than ten times that across six-sensor subsets
+($\pm0.005$).
 
 \textbf{Which faults go first.} The class that degrades first is \emph{normal}.
 Reducing sensors here does not produce a system that misses faults but one that
@@ -839,16 +847,13 @@ label-correlated recording artefact proved a learnable shortcut that marginal
 importance ranks last of eight, detectable only by isolating the affected
 recordings rather than examining pooled summaries.
 
-\textbf{What is demonstrated, and what is not.} Demonstrated: within this
-dataset, this feature pipeline, this classifier and this evaluation protocol,
-four sensors carry a mean macro-F1 loss of $0.0078$ against seven, and the
-degradation curve is concave with no step at which a sensor is actively
-harmful. Not demonstrated: that four sensors are statistically equivalent to
-seven, which the non-inferiority interval does not establish; that four
-sensors suffice on machinery in service, which a laboratory rig cannot show;
-and that the threshold holds for other classifiers, which the SVM already
-contradicts. An industrial facility should read this as a method for
-determining its own reduction curve, not as licence to remove three channels.
+\textbf{What is demonstrated, and what is not.} Demonstrated: within this dataset, pipeline, classifier and protocol, four
+sensors carry a mean macro-F1 loss of $0.0078$ against seven, and the curve is
+concave with no step at which a sensor is actively harmful. Not demonstrated:
+that the two configurations are statistically equivalent; that four sensors
+suffice in service; or that the threshold holds for other classifiers, which
+the SVM already contradicts. This is a method for determining a reduction
+curve, not licence to remove three channels.
 
 Future work should test whether a four-sensor threshold persists in service;
 whether the redundancy that defeats selection here is a property of this array
@@ -859,9 +864,24 @@ does not address. The pipeline, stored predictions, every table and figure,
 and the test suite that verifies them are released with this paper.
 
 \section*{Acknowledgments}
-% Add a funding or institutional-support sentence here if one is
-% required. The AI-assistance disclosure that previously stood here
-% was removed at the author's direction on 2026-11-08.
+% Add a funding or institutional-support sentence here if one is required.
+%
+% AI DISCLOSURE: required by IEEE policy. Check it against your own
+% recollection before submitting and correct anything it overstates or
+% understates -- it is your declaration. Naming the specific model
+% versions is better practice than naming the tool alone.
+
+The author directed this study and is responsible for its content. The
+research questions, the hypotheses and their thresholds, the evaluation
+protocol and the decision to exclude the tachometer channel were specified
+before the corresponding analyses were run, and the interpretation of the
+results is the author's own. Claude Code (Anthropic) was used as a
+programming and drafting assistant: to implement the pipeline and its test
+suite from those specifications, to draft and edit the manuscript from the
+generated results, and to audit the generated tables and figures for
+defects. Every reported number is produced by the released code from
+stored predictions rather than written by hand. The author reviewed and
+verified all generated code, analysis and text.
 
 \bibliographystyle{IEEEtran}
 \bibliography{refs}

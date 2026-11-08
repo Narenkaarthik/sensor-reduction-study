@@ -438,7 +438,7 @@ def _bias_peak() -> int:
 def holm_adjusted(p_values: dict[int, float]) -> dict[int, float]:
     """Holm-Bonferroni adjustment of a family of p-values.
 
-    POST HOC and SUPPLEMENTARY. The pre-registered H3 verdict is computed on
+    POST HOC and SUPPLEMENTARY. The pre-specified H3 verdict is computed on
     the RAW p-values against alpha and is not affected by this.
 
     Args:
@@ -797,27 +797,53 @@ def write_hypotheses(table: pd.DataFrame, curves: dict, full_mean: float,
     out.append("    than a naive one, deliberately.")
     out.append("")
     full_name_ = subset_name(SENSORS)
-    out.append("    Permutation-selected, against the full configuration:")
-    out.append("      k   mean diff   95% CI (corrected)      p      verdict")
+    results: dict[int, dict[str, float]] = {}
     for k in range(1, len(SENSORS)):
         picked_name = [selected_subset(selection[sp], "perm", k)
                        for sp in wide.index]
         paired_k = [float(wide.at[sp, nm])
                     for sp, nm in zip(wide.index, picked_name)]
         paired_full = [float(wide.at[sp, full_name_]) for sp in wide.index]
-        r = non_inferiority(paired_full, paired_k, TOLERANCE)
-        verdict = "NON-INFERIOR" if r["non_inferior"] else "not shown"
+        results[k] = non_inferiority(paired_full, paired_k, TOLERANCE)
+
+    # The six tests are a FAMILY: scanning them to find which k qualifies is
+    # a multiple-comparison procedure, and an unadjusted smallest p overstates
+    # the evidence. Holm across the six is the correction.
+    holm_ni = holm_adjusted({k: r["p"] for k, r in results.items()})
+
+    out.append("    Permutation-selected, against the full configuration.")
+    out.append("    The six tests form one family, because the table is read")
+    out.append("    to find which k qualifies; the Holm column is therefore")
+    out.append("    the one to judge a confirmatory claim on.")
+    out.append("      k   mean diff   95% CI (corrected)    raw p   Holm p"
+               "   verdict")
+    for k in sorted(results):
+        r = results[k]
+        adj = holm_ni.get(k, float("nan"))
+        verdict = "NON-INFERIOR" if adj < ALPHA else "not shown"
         out.append(f"      {k}   {r['mean_diff']:+.4f}     "
                    f"[{r['ci_low']:+.4f}, {r['ci_high']:+.4f}]   "
-                   f"{r['p']:.4f}   {verdict}")
+                   f"{r['p']:.4f}   {adj:.4f}   {verdict}")
+    n_sig_raw = sum(1 for r in results.values() if r["p"] < ALPHA)
+    n_sig_holm = sum(1 for v in holm_ni.values() if v < ALPHA)
     out.append("")
-    out.append("    READ THIS CAREFULLY: 'not shown' does NOT mean the")
+    out.append(f"    {n_sig_raw}/{len(results)} significant on raw p; "
+               f"{n_sig_holm}/{len(results)} after Holm.")
+    out.append("")
+    out.append("    READ THIS CAREFULLY. 'Not shown' does NOT mean the")
     out.append("    configuration is inferior. With n = 10 dependent scores")
     out.append("    the test has little power, so failing to demonstrate")
     out.append("    non-inferiority is the expected outcome for a difference")
-    out.append("    this small. The honest summary is that the point estimate")
-    out.append("    clears the tolerance while the evidence is not strong")
-    out.append("    enough to call it demonstrated equivalence.")
+    out.append("    this small: the result does not settle equivalence either")
+    out.append("    way, rather than arguing against it. The honest summary")
+    out.append("    is that the point estimate clears the tolerance while the")
+    out.append("    evidence does not establish equivalence.")
+    out.append("")
+    out.append("    These six tests are EXPLORATORY. H2 as pre-specified is a")
+    out.append("    comparison of means and its verdict is unchanged by any")
+    out.append("    of this. No k should be presented as a confirmed")
+    out.append("    non-inferior configuration on the strength of an")
+    out.append("    unadjusted p drawn from a family of six.")
     out.append("    oracle number only shows what would be possible if the best")
     out.append("    subset were known in advance, which it never is.")
     out.append("")

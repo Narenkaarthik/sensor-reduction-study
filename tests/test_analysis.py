@@ -248,7 +248,12 @@ def test_hypotheses_file_states_its_thresholds_inline(analysed) -> None:
 def test_generated_text_never_calls_a_sensor_uninformative(analysed) -> None:
     """Section 11 wording rule, enforced across every generated text output."""
     root, _, _, _, _ = analysed
-    for path in sorted(p for p in (root / "tables").rglob("*") if p.is_file()):
+    # run_metadata.json is skipped on purpose: it records the command line,
+    # so invoking pytest with this test's own name (or -k uninformative)
+    # writes a forbidden word into it and the test fails on its own name.
+    # The rule is about generated PROSE describing a sensor, not provenance.
+    for path in sorted(p for p in (root / "tables").rglob("*")
+                       if p.is_file() and p.name != "run_metadata.json"):
         text = path.read_text(errors="ignore").lower()
         for word in FORBIDDEN_WORDS:
             assert word not in text, f"{path.name} contains {word!r}"
