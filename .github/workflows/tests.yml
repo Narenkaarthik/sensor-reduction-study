@@ -30,11 +30,57 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
 
+      # The installed versions float, so record them: a job that passed last
+      # week and fails today with no code change is almost always a dependency
+      # moving underneath it, and without this the log cannot show that.
+      - name: Record environment
+        run: |
+          python -VV
+          python - <<'PY'
+          import importlib
+          for name in ("numpy", "pandas", "scipy", "sklearn",
+                       "matplotlib", "joblib", "pytest"):
+              mod = importlib.import_module(name)
+              print(f"{name:12} {getattr(mod, '__version__', '?')}")
+          PY
+
       # MaFaulDa is not redistributed, so the realdata tests have nothing to run
       # against and skip themselves. Everything else runs on a seeded synthetic
       # dataset built at test time.
       - name: Run tests
-        run: python -m pytest -m "not realdata" -q
+        run: |
+          set -o pipefail
+          python -m pytest -m "not realdata" -q -rf --tb=short 2>&1 \
+            | tee pytest-output.txt
+
+      # Logs are only readable by someone with repository access, so a failure
+      # here is invisible to anyone reading the public Actions page. Re-emitting
+      # the failing lines as workflow annotations puts them on the run summary
+      # and into the checks API, where they can be read without signing in.
+      - name: Surface failures as annotations
+        if: failure()
+        run: |
+          if [ ! -f pytest-output.txt ]; then
+            echo "::error::Test step produced no output file."
+            exit 0
+          fi
+          grep -E '^(FAILED|ERROR)' pytest-output.txt | while IFS= read -r line; do
+            echo "::error::${line}"
+          done
+          {
+            echo '### pytest failures'
+            echo '```'
+            sed -n '/=\{2,\} FAILURES/,$p' pytest-output.txt | head -200
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload test output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-output
+          path: pytest-output.txt
+          if-no-files-found: ignore
 
       - name: Confirm no dataset was committed
         run: |
