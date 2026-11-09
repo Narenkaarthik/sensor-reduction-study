@@ -14,13 +14,17 @@ authors:
 
 repository-code: https://github.com/Narenkaarthik/sensor-reduction-study
 
-# ARCHIVAL DOI. Uncomment and fill once Zenodo has minted it; see
-# docs/RELEASING.md. Use the CONCEPT doi (the one that always resolves to the
-# newest version), not the per-version doi.
-# identifiers:
-#   - type: doi
-#     value: 10.5281/zenodo.NNNNNNN
-#     description: Archived snapshot of the code and stored predictions
+# The CONCEPT doi: it always resolves to the newest archived version, which
+# is what someone citing this software generally wants. The v1.0.0 snapshot
+# that produced the published numbers is 10.5281/zenodo.24087302, and that
+# is the one the paper cites.
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.24087301
+    description: Archived code and stored predictions, all versions
+  - type: doi
+    value: 10.5281/zenodo.24087302
+    description: Archived code and stored predictions, v1.0.0
 license: MIT
 
 keywords:

@@ -1,4 +1,5 @@
 [![tests](https://github.com/Narenkaarthik/sensor-reduction-study/actions/workflows/tests.yml/badge.svg)](https://github.com/Narenkaarthik/sensor-reduction-study/actions/workflows/tests.yml)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24087301.svg)](https://doi.org/10.5281/zenodo.24087301)
 
 # How Many Sensors Are Enough?
 
