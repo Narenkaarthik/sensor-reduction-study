@@ -203,3 +203,27 @@ def test_run_metadata_contains_no_local_absolute_paths() -> None:
     assert meta["inputs"]["features"]["data_dir"] == "data/mafaulda"
     assert meta["inputs"]["features"]["python_executable"] == ".venv/x"
     assert not Path(meta["python_executable"]).is_absolute()
+
+def test_run_metadata_handles_an_interpreter_outside_the_repository(
+        monkeypatch) -> None:
+    """A system or CI interpreter must not leave an absolute path behind.
+
+    Inside a project virtual environment sys.executable sits under the
+    repository and is reduced to a relative path. On a CI runner it does not:
+    GitHub provisions Python under /opt/hostedtoolcache, outside both the
+    checkout and the home directory. That case used to slip an absolute,
+    machine-specific path into every metadata record, and it could not be
+    caught on a developer machine because there the interpreter IS under the
+    repository.
+    """
+    import sys
+
+    from common import run_metadata
+
+    monkeypatch.setattr(
+        sys, "executable", "/opt/hostedtoolcache/Python/3.12.9/x64/bin/python")
+    assert run_metadata("probe.py")["python_executable"] == "python"
+
+    monkeypatch.setattr(sys, "executable", r"C:\Python312\python.exe")
+    assert not Path(
+        run_metadata("probe.py")["python_executable"]).is_absolute()

@@ -707,6 +707,31 @@ def _repo_relative(value: object) -> object:
     return out.replace("\\", "/") if touched else out
 
 
+def _interpreter_label() -> str:
+    """The interpreter, named without disclosing where this machine keeps it.
+
+    ``sys.executable`` is absolute. Inside a project virtual environment it
+    sits under the repository and ``_repo_relative`` reduces it to something
+    like ``.venv/bin/python``, which is useful and identical everywhere. But
+    an interpreter installed system-wide, or provisioned by CI, lies outside
+    both the repository and the home directory, and nothing would reduce it:
+    the record would then carry an absolute path that differs per machine and,
+    on a developer box, can name the operating user.
+
+    So a path that cannot be made repository-relative is reduced to the
+    executable's own name. No provenance is lost, because ``python_version``
+    already records which interpreter ran.
+
+    Returns:
+        A repository-relative path, or the bare executable name.
+    """
+    exe = Path(sys.executable)
+    try:
+        return exe.relative_to(ROOT).as_posix()
+    except ValueError:
+        return exe.name
+
+
 def run_metadata(script: str, **extra: object) -> dict[str, object]:
     """Build the metadata record written alongside every generated output.
 
@@ -726,7 +751,7 @@ def run_metadata(script: str, **extra: object) -> dict[str, object]:
         "git_commit": git["commit"],
         "git_dirty": git["dirty"],          # SOURCE files only; see git_state
         "python_version": sys.version.split()[0],
-        "python_executable": sys.executable,
+        "python_executable": _interpreter_label(),
         "package_versions": package_versions(),
         "seed": SEED,
         "command_line": " ".join(sys.argv),
