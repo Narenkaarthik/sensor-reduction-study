@@ -83,25 +83,24 @@ Condition-monitoring systems are usually designed by adding sensors until
 diagnosis is good enough, and the cost of that choice is rarely measured. We
 ask the opposite question: how far can instrumentation be reduced before
 diagnosis degrades? On the MaFaulDa dataset we evaluate \emph{all} 127
-non-empty subsets of seven sensors with one fixed Random Forest, under grouped
-cross-validation that holds out whole rotation-speed bands, with every subset
-chosen from training data alone and three hypotheses fixed in advance. Macro-F1
-falls from $0.9917 \pm 0.0066$ with seven sensors to $0.8799$ for the best
-single sensor, and removing a sensor never helped by more than the $0.01$
-tolerance at any step. Four sensors chosen on training data reach
-$0.984 \pm 0.013$, so the mean loss from dropping three of seven is $0.0078$ —
-inside the margin, though with ten dependent scores a corrected interval still
-admits a loss of $0.019$, so this is an indicated reduction rather than
-demonstrated equivalence. Informed selection did \emph{not} reliably beat
-a typical subset of the same size---four of six sizes for permutation-based
-selection, two of six for forward---so on this redundant array how many sensors
-are used matters more than which. Degradation falls almost entirely on false
-alarms, which rise from 4\% to 30\% while missed detections stay near zero. An
-SVM reproduces the curve's shape and H1 but meets the tolerance at $k=5$, so
-the reduction threshold is model-dependent where the shape is not. We further
-show that a channel carrying a label-correlated recording artefact is a
-learnable shortcut that marginal importance ranks last of eight, and give the
-diagnostic that exposes it. Code, predictions and tables are released.
+non-empty subsets of seven sensors with one fixed Random Forest, under
+cross-validation holding out whole rotation-speed bands, with every subset
+chosen from training data alone and three hypotheses fixed in advance.
+Macro-F1 falls from $0.9917 \pm 0.0066$ with seven sensors to $0.8799$ for the
+best single sensor, and removing a sensor never helped by more than the $0.01$
+tolerance. Four sensors reach $0.984 \pm 0.013$: a mean loss of $0.0078$,
+inside the margin, but a corrected interval over ten dependent scores admits
+$0.019$, so this is an indicated reduction rather than demonstrated
+equivalence. Informed selection did \emph{not} reliably beat a typical
+same-size subset---four of six sizes for permutation-based selection, two of
+six for forward---so on this redundant array how many sensors are used matters
+more than which. Degradation falls almost entirely on false alarms, rising
+from 4\% to 30\% while missed detections stay near zero. An SVM reproduces the
+curve's shape but meets the tolerance at $k=5$, so the threshold is
+model-dependent where the shape is not. We further show that a channel
+carrying a label-correlated recording artefact is a learnable shortcut that
+marginal importance ranks last of eight, and give the diagnostic that exposes
+it. Code and stored predictions are available.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -144,7 +143,8 @@ fixed before any result was seen. \textbf{H1:} removing one sensor never raises
 mean macro-F1 by more than a comparability tolerance of $0.01$ at any
 consecutive step. \textbf{H2:} some $k<7$ reaches within $0.01$ of the full
 array. \textbf{H3:} for each $k$ from 1 to 6 the selected subset beats the
-median same-size subset (one-sided Wilcoxon, $n=10$, $\alpha=0.05$).
+median same-size subset (one-sided Wilcoxon~\cite{wilcoxon1945}, $n=10$,
+$\alpha=0.05$).
 
 Our contributions are: an exhaustive rather than heuristic subset evaluation,
 giving the full distribution at every size and an explicit oracle bound; an
@@ -445,8 +445,9 @@ which depends on the cost of a false alarm against the cost of a channel.
 \textbf{A point estimate inside a margin is not demonstrated equivalence.}
 H2 as specified compares means. Table~\ref{tab:noninf} asks the inferential
 question instead, one-sided non-inferiority against the same $0.01$ margin,
-with the standard error carrying the Nadeau--Bengio correction because the
-paired differences are not independent.
+with the standard error carrying the Nadeau--Bengio
+correction~\cite{nadeau2003} because the paired differences are not
+independent.
 
 \begin{table}[t]
 \centering
@@ -532,15 +533,17 @@ between the 46th and 74th percentile of their size, so selection helps modestly
 and inconsistently rather than reliably finding a top subset.
 
 Two post-hoc checks, neither of which disturbs the pre-specified verdict,
-both push in the same direction. Holm adjustment for the family of six
-comparisons changes nothing material (four of six and two of six survive). More
+both push in the same direction. Holm adjustment~\cite{holm1979} for the family of six comparisons changes
+nothing material (four of six and two of six survive). More
 importantly, the ten scores are \emph{not} mutually independent---two repeats
 reuse the same recordings, so training sets overlap heavily and the naive
-variance is too small---so we also report the Nadeau--Bengio corrected
-resampled $t$-test, which replaces the $1/n$ variance factor with $1/n+1/4$ for
-5-fold. Under it only three of six survive for permutation selection and one of
+variance is too small---so we also report the Nadeau--Bengio corrected resampled
+$t$-test~\cite{nadeau2003}, which replaces the $1/n$ variance factor with
+$1/n+1/4$ for 5-fold. The correction is derived there for repeated random
+subsampling; the $1/(k-1)$ term is the usual adaptation to repeated $k$-fold. Under it only three of six survive for permutation selection and one of
 six for forward. H3 fails more decisively once dependence is accounted for, not
-less. We do not report a $5\times2$cv $t$-test: that procedure requires five
+less. We do not report a $5\times2$cv $t$-test~\cite{dietterich1998}: that procedure
+requires five
 replications of \emph{two}-fold cross-validation, whereas this design is two
 repeats of \emph{five}-fold, and halving the training set would change the
 sensor-count curve itself rather than only its $p$-values.
@@ -834,9 +837,9 @@ seven sensors to $0.8799$ with the best single sensor, with no step at which
 removing a sensor helped by more than $0.01$ (H1 supported). \textbf{Four
 sensors chosen on training data reach $0.984 \pm 0.013$, a mean loss of
 $0.0078$ against the full array} (H2 supported at $k=4$; the test-selected
-oracle reaches it at $k=3$, an upper bound and not an achievable result). A
-non-inferiority test on the same margin is not significant at $k=4$, so this is
-an indicated reduction, not demonstrated equivalence. Informed selection did
+oracle reaches it at $k=3$, an upper bound and not an achievable result). Non-inferiority against the same margin is not demonstrated at \emph{any} $k$
+once the six tests are adjusted for multiplicity, so this is an indicated
+reduction rather than demonstrated equivalence. Informed selection did
 not reliably beat a
 typical subset of the same size---four of six sizes for permutation-based
 selection, two of six for forward---so H3 is not supported, and on this
@@ -861,7 +864,10 @@ or of accelerometer arrays generally; and how the curve changes for a model
 consuming raw time series. Runtime sensor loss---how a full-sensor model
 behaves when an installed sensor fails---is a distinct experiment this design
 does not address. The pipeline, stored predictions, every table and figure,
-and the test suite that verifies them are released with this paper.
+and the 139-test suite that verifies them are available at
+\url{https://github.com/Narenkaarthik/sensor-reduction-study}, with
+\texttt{requirements-lock.txt} pinning the versions that reproduce the
+numbers. The MaFaulDa archive is obtained separately from~\cite{mafaulda}.
 
 \section*{Acknowledgments}
 % Add a funding or institutional-support sentence here if one is required.

@@ -347,3 +347,91 @@
   year    = {2024},
   doi     = {10.1109/ACCESS.2024.3497716}
 }
+
+% ===========================================================================
+% STATISTICAL METHODS (added 2026-11-09)
+% ===========================================================================
+%
+% A review found that five named methods carried no citation. Eponymous
+% methods without references is a routine desk complaint, and the
+% Nadeau-Bengio correction in particular does load-bearing work on this
+% paper's central claim.
+%
+% VERIFIED 2026-11-09 against the MLanthology record for Machine Learning
+% 2003, which gives volume 52, pages 239-281 and the DOI; corroborated by a
+% second bibliographic database with the same page range and DOI.
+%
+% CITE THE 2003 JOURNAL VERSION, not the 1999 NIPS paper of the same title.
+%
+% CAUTION ON WHAT THIS SUPPORTS: Nadeau and Bengio derive the correction for
+% repeated random subsampling. Applying it to repeated k-fold, as we do, is
+% the common adaptation and the variance factor becomes 1/n + 1/(k-1). The
+% paper should cite them for the correction and not imply they derived the
+% k-fold form.
+%
+@article{nadeau2003,
+  author  = {Nadeau, Claude and Bengio, Yoshua},
+  title   = {Inference for the Generalization Error},
+  journal = {Machine Learning},
+  volume  = {52},
+  number  = {3},
+  pages   = {239--281},
+  year    = {2003},
+  doi     = {10.1023/A:1024068626366}
+}
+
+% VERIFIED 2026-11-09. Scandinavian Journal of Statistics vol. 6, no. 2,
+% pp. 65-70, 1979; JSTOR stable id 4615733. Holm called it the "sequentially
+% rejective Bonferroni test"; "Holm-Bonferroni" is the later name. No DOI is
+% listed for this article, so the field is omitted rather than invented.
+%
+@article{holm1979,
+  author  = {Holm, Sture},
+  title   = {A Simple Sequentially Rejective Multiple Test Procedure},
+  journal = {Scandinavian Journal of Statistics},
+  volume  = {6},
+  number  = {2},
+  pages   = {65--70},
+  year    = {1979}
+}
+
+% VERIFIED 2026-11-09. Biometrics Bulletin vol. 1, no. 6, pp. 80-83, 1945.
+%
+% DOI CAVEAT, CHECK BEFORE SUBMITTING: only ONE source gave the DOI
+% 10.2307/3001968. A second source offered 10.2307/3001946, but that belongs
+% to Wilcoxon's separate 1947 paper "Probability Tables for Individual
+% Comparisons by Ranking Methods" and is wrong for this one. Confirm against
+% JSTOR or Crossref; if you cannot, drop the doi field -- the volume, number,
+% pages and year are independently confirmed and suffice.
+%
+@article{wilcoxon1945,
+  author  = {Wilcoxon, Frank},
+  title   = {Individual Comparisons by Ranking Methods},
+  journal = {Biometrics Bulletin},
+  volume  = {1},
+  number  = {6},
+  pages   = {80--83},
+  year    = {1945},
+  doi     = {10.2307/3001968}
+}
+
+% VERIFIED 2026-11-09 against the DBLP record journals/neco/Dietterich98 and
+% the MLanthology entry, which agree on volume 10, issue 7, pages 1895-1923
+% and the DOI. A Cornell course slide gives 1895-1924, which is a typo.
+%
+% Supports: the 5x2cv procedure we explicitly do NOT use, and why. Dietterich
+% shows that a paired t-test over several random train/test splits has an
+% inflated Type I error -- which is also the motivation for citing
+% \cite{nadeau2003} beside it.
+%
+@article{dietterich1998,
+  author  = {Dietterich, Thomas G.},
+  title   = {Approximate Statistical Tests for Comparing Supervised
+             Classification Learning Algorithms},
+  journal = {Neural Computation},
+  volume  = {10},
+  number  = {7},
+  pages   = {1895--1923},
+  year    = {1998},
+  doi     = {10.1162/089976698300017197}
+}
