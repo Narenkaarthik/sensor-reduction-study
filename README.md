@@ -65,8 +65,8 @@ tests/                     test levels A-F
 results/<analysis>/        per-split scores, predictions and selection records
 tables/<analysis>/         generated tables, including the hypothesis verdicts
 figures/<analysis>/        generated figures as PDF and 300 dpi PNG
-paper/                     IEEEtran skeleton and bibliography
-docs/                      results inventory
+paper/                     the paper: LaTeX source, bibliography, compiled PDF
+docs/                      results inventory and the commit map
 ```
 
 There are three analyses, each with its own `results`, `tables` and `figures`

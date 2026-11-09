@@ -38,3 +38,6 @@ paper/*.out
 
 # an extracted copy of the submission bundle, if one is unpacked in place
 paper/overleaf-bundle/
+
+# Working notes kept out of the public repository
+private/
