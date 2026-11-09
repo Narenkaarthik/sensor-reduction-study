@@ -13,6 +13,14 @@ authors:
     family-names: Kaarthik
 
 repository-code: https://github.com/Narenkaarthik/sensor-reduction-study
+
+# ARCHIVAL DOI. Uncomment and fill once Zenodo has minted it; see
+# docs/RELEASING.md. Use the CONCEPT doi (the one that always resolves to the
+# newest version), not the per-version doi.
+# identifiers:
+#   - type: doi
+#     value: 10.5281/zenodo.NNNNNNN
+#     description: Archived snapshot of the code and stored predictions
 license: MIT
 
 keywords:
