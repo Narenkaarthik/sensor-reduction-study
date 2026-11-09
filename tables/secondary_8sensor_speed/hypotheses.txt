@@ -49,6 +49,55 @@ H2: some k < 8 reaches mean macro-F1 >= (full - TOLERANCE) = 0.9817.
 
     VERDICT: SUPPORTED (on the fair, permutation-selected result)
     The FAIR number is the answer to the research question. The
+    oracle number only shows what would be possible if the
+    best subset were known in advance, which it never is.
+
+    SUPPLEMENTARY: NON-INFERIORITY, the inferential version
+    H2 above compares POINT ESTIMATES against the tolerance.
+    That is what was pre-specified, and the verdict stands on
+    it. But a mean inside a margin is not the same claim as
+    'demonstrably within the margin', so the test below asks
+    the inferential question directly, for each k:
+
+      H0: mean(full - k) >= margin   (the loss is at least
+                                      the margin)
+      H1: mean(full - k) <  margin   (the loss is smaller)
+
+    margin = 0.01, one-sided, alpha = 0.05.
+    The standard error carries the Nadeau-Bengio correction,
+    because the paired differences come from repeated k-fold
+    and are NOT independent; the interval is therefore wider
+    than a naive one, deliberately.
+
+    Permutation-selected, against the full configuration.
+    The six tests form one family, because the table is read
+    to find which k qualifies; the Holm column is therefore
+    the one to judge a confirmatory claim on.
+      k   mean diff   95% CI (corrected)    raw p   Holm p   verdict
+      1   +0.1208     [+0.0477, +0.1939]   0.9962   1.0000   not shown
+      2   +0.0441     [-0.0102, +0.0984]   0.9054   1.0000   not shown
+      3   +0.0189     [-0.0258, +0.0636]   0.6689   1.0000   not shown
+      4   +0.0078     [-0.0010, +0.0167]   0.2960   1.0000   not shown
+      5   +0.0041     [-0.0033, +0.0114]   0.0498   0.2990   not shown
+      6   +0.0028     [-0.0029, +0.0085]   0.0092   0.0642   not shown
+      7   +0.0038     [-0.0040, +0.0116]   0.0522   0.2990   not shown
+
+    2/7 significant on raw p; 0/7 after Holm.
+
+    READ THIS CAREFULLY. 'Not shown' does NOT mean the
+    configuration is inferior. With n = 10 dependent scores
+    the test has little power, so failing to demonstrate
+    non-inferiority is the expected outcome for a difference
+    this small: the result does not settle equivalence either
+    way, rather than arguing against it. The honest summary
+    is that the point estimate clears the tolerance while the
+    evidence does not establish equivalence.
+
+    These six tests are EXPLORATORY. H2 as pre-specified is a
+    comparison of means and its verdict is unchanged by any
+    of this. No k should be presented as a confirmed
+    non-inferior configuration on the strength of an
+    unadjusted p drawn from a family of six.
     oracle number only shows what would be possible if the best
     subset were known in advance, which it never is.
 
@@ -104,6 +153,39 @@ SUPPLEMENTARY, POST HOC: HOLM-ADJUSTED p-VALUES FOR H3
       k=6: raw p=0.5645  Holm-adjusted p=1.0000
       k=7: raw p=0.1826  Holm-adjusted p=0.7305
       2/7 survive Holm at alpha = 0.05
+
+----------------------------------------------------------------------
+SUPPLEMENTARY, POST HOC: NADEAU-BENGIO CORRECTED t-TEST FOR H3
+  NOT the pre-registered test; the H3 verdicts above stand on
+  the raw Wilcoxon p-values against alpha = 0.05.
+  The paired split scores are NOT independent: repeated k-fold
+  reuses the same recordings, so training sets overlap and the
+  naive variance is too small. This test replaces the 1/n
+  variance factor with 1/n + 1/4, which is the
+  Nadeau-Bengio correction for 5-fold, and is markedly more
+  conservative than the uncorrected tests above.
+  A 5x2cv t-test is NOT reported: it requires 5 replications of
+  TWO-fold CV, whereas this study runs 2 repeats of FIVE-fold.
+
+    Permutation-selected:
+      k=1: raw p=0.0039  corrected p=0.0160  significant after correction
+      k=2: raw p=0.0010  corrected p=0.0190  significant after correction
+      k=3: raw p=0.0010  corrected p=0.0234  significant after correction
+      k=4: raw p=0.0352  corrected p=0.1305
+      k=5: raw p=0.0039  corrected p=0.0835
+      k=6: raw p=0.0352  corrected p=0.1294
+      k=7: raw p=0.9453  corrected p=0.8083
+      3/7 survive the correction at alpha = 0.05
+
+    Forward-selected:
+      k=1: raw p=0.0010  corrected p=0.0069  significant after correction
+      k=2: raw p=0.0010  corrected p=0.0091  significant after correction
+      k=3: raw p=0.2031  corrected p=0.4330
+      k=4: raw p=0.8428  corrected p=0.8242
+      k=5: raw p=0.0537  corrected p=0.1829
+      k=6: raw p=0.5645  corrected p=0.6860
+      k=7: raw p=0.1826  corrected p=0.2845
+      2/7 survive the correction at alpha = 0.05
 
 ----------------------------------------------------------------------
 NOTE ON INDEPENDENCE
